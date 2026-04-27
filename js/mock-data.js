@@ -274,3 +274,155 @@ const MODULE_KEYS = {
 };
 
 const MODULE_LABELS = { env: '环境卫生', safety: '安全管理', facility: '设施设备', green: '绿化养护', service: '客户服务' };
+
+// ---- 规则配置数据 ----
+const DEFAULT_RULES = [
+  {
+    id: 'R001',
+    category: 'analysis',
+    name: '总分分析规则',
+    desc: '根据项目总得分，生成总体质量分析文字，包括等级判断、好坏模块识别',
+    enabled: true,
+    promptTemplate: `你是一名物业品质分析专家。请根据以下项目的第三方检查数据，生成简洁的总分分析报告（150字以内）。
+
+项目名称：{{projectName}}
+本期总得分：{{totalScore}}（{{grade}}）
+各模块得分：环境卫生 {{env}}、安全管理 {{safety}}、设施设备 {{facility}}、绿化养护 {{green}}、客户服务 {{service}}
+
+分析要求：
+1. 说明总体得分水平及等级
+2. 指出优秀以上（≥93分）的模块
+3. 指出良好以下（<88分）的模块
+4. 一句话总结主要问题方向`,
+    variables: ['projectName', 'totalScore', 'grade', 'env', 'safety', 'facility', 'green', 'service'],
+    outputFormat: '段落文字',
+  },
+  {
+    id: 'R002',
+    category: 'analysis',
+    name: '模块分析规则',
+    desc: '对每个专业模块（环境/安全/设施/绿化/服务）进行独立得分分析，识别具体问题点',
+    enabled: true,
+    promptTemplate: `你是一名物业品质分析专家。请对以下模块的检查数据进行简要分析（每模块80字以内）。
+
+项目：{{projectName}}
+模块：{{moduleName}}
+本期得分：{{moduleScore}}（{{moduleGrade}}）
+主要问题：{{issues}}
+历史得分：前三次分别为 {{historyScores}}
+
+分析要求：
+1. 说明本期得分水平
+2. 结合主要问题说明失分原因
+3. 与历史对比说明趋势（上升/下降/持平）`,
+    variables: ['projectName', 'moduleName', 'moduleScore', 'moduleGrade', 'issues', 'historyScores'],
+    outputFormat: '段落文字',
+  },
+  {
+    id: 'R003',
+    category: 'analysis',
+    name: 'AI综合分析规则',
+    desc: '基于全部模块得分与问题，生成综合性AI分析报告，涵盖风险评估与重点关注项',
+    enabled: true,
+    promptTemplate: `你是一名资深物业品质管理顾问。请基于以下第三方检查数据，生成综合分析报告（200字以内）。
+
+项目：{{projectName}}（{{level}}级，{{city}}）
+本期总得分：{{totalScore}}（{{grade}}）
+模块得分：环境 {{env}}、安全 {{safety}}、设施 {{facility}}、绿化 {{green}}、服务 {{service}}
+红线触发：{{redlineCount}} 项
+处罚考核：{{penaltyCount}} 项
+主要问题：{{issues}}
+
+分析框架：
+1. 整体品质水平评价
+2. 核心风险点识别（优先安全类红线）
+3. 亮点模块与薄弱模块对比
+4. 下一步重点关注方向`,
+    variables: ['projectName', 'level', 'city', 'totalScore', 'grade', 'env', 'safety', 'facility', 'green', 'service', 'redlineCount', 'penaltyCount', 'issues'],
+    outputFormat: '段落文字',
+  },
+  {
+    id: 'R004',
+    category: 'suggestion',
+    name: '整改建议规则',
+    desc: '针对检查发现的具体问题，生成可操作的整改建议列表',
+    enabled: true,
+    promptTemplate: `你是一名物业品质改善顾问。请针对以下问题，生成具体可执行的整改建议（每条建议不超过50字，最多5条）。
+
+项目：{{projectName}}
+问题清单：
+{{issueList}}
+
+要求：
+1. 每条建议对应具体问题
+2. 建议要具体可执行，包含"谁来做、做什么、何时完成"
+3. 按优先级排序（安全类优先）
+4. 格式：序号 + 建议内容`,
+    variables: ['projectName', 'issueList'],
+    outputFormat: '列表（编号）',
+  },
+  {
+    id: 'R005',
+    category: 'suggestion',
+    name: 'AI提升建议规则',
+    desc: '基于同类优秀项目数据对比，生成中长期品质提升建议',
+    enabled: true,
+    promptTemplate: `你是一名物业品质战略顾问。请基于以下数据，对比同类型优秀项目，给出中长期提升建议（200字以内）。
+
+目标项目：{{projectName}}（{{level}}级）
+当前得分：{{totalScore}}（{{grade}}）
+薄弱模块：{{weakModules}}
+
+同类优秀项目参考数据：
+- 同级别平均得分：{{benchmarkScore}}
+- 标杆项目：{{benchmarkProject}}（得分：{{benchmarkTotal}}）
+
+提升建议框架：
+1. 与标杆项目的差距分析
+2. 薄弱模块的系统性改善路径
+3. 可借鉴的具体管理方法
+4. 建议时间节点（短期1月/中期3月/长期半年）`,
+    variables: ['projectName', 'level', 'totalScore', 'grade', 'weakModules', 'benchmarkScore', 'benchmarkProject', 'benchmarkTotal'],
+    outputFormat: '段落文字',
+  },
+];
+
+function loadRules() {
+  try {
+    const stored = localStorage.getItem('tdb_rules');
+    if (stored) return JSON.parse(stored);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_RULES));
+}
+
+function saveRules(rules) {
+  localStorage.setItem('tdb_rules', JSON.stringify(rules));
+}
+
+function getRules() { return loadRules(); }
+
+function updateRule(updated) {
+  const list = getRules();
+  const idx = list.findIndex(r => r.id === updated.id);
+  if (idx >= 0) list[idx] = updated;
+  else list.push(updated);
+  saveRules(list);
+}
+
+function addRule(rule) {
+  const list = getRules();
+  rule.id = 'R' + String(Date.now()).slice(-6);
+  list.push(rule);
+  saveRules(list);
+  return rule;
+}
+
+function deleteRule(id) {
+  const list = getRules().filter(r => r.id !== id);
+  saveRules(list);
+}
+
+const RULE_CATEGORIES = [
+  { value: 'analysis', label: '问题分析', color: '#c0392b' },
+  { value: 'suggestion', label: '提升建议', color: '#2980b9' },
+];

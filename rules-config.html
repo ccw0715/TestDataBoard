@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>规则配置 - 第三方数据看板</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .rules-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .rule-sidebar {
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      overflow: hidden;
+      position: sticky;
+      top: 72px;
+    }
+
+    .rule-sidebar-header {
+      padding: 14px 16px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .rule-category-section { padding: 8px 0; }
+
+    .rule-category-label {
+      padding: 6px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-light);
+    }
+
+    .rule-sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+      font-size: 13px;
+    }
+
+    .rule-sidebar-item:hover { background: #fafafa; }
+    .rule-sidebar-item.active { background: #fff0f0; border-left-color: var(--primary); color: var(--primary); font-weight: 500; }
+
+    .rule-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .rule-status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .dot-on { background: var(--success); }
+    .dot-off { background: var(--border); }
+
+    /* Rule detail card */
+    .rule-detail-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .rule-category-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .tag-analysis { background: #ffebee; color: var(--primary); }
+    .tag-suggestion { background: #e3f2fd; color: #1565c0; }
+
+    .rule-header-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #ccc;
+      border-radius: 22px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 16px; height: 16px;
+      left: 3px; bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider { background: var(--success); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    .prompt-editor {
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border: 1px solid #313244;
+      border-radius: 6px;
+      padding: 14px;
+      resize: vertical;
+      min-height: 260px;
+      width: 100%;
+      outline: none;
+      tab-size: 2;
+    }
+
+    .prompt-editor:focus { border-color: var(--primary); }
+
+    .variable-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .variable-chip {
+      padding: 4px 10px;
+      background: #e8f4fd;
+      color: #1a6fa8;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: monospace;
+      cursor: pointer;
+      border: 1px solid #bee3f8;
+      transition: all 0.15s;
+    }
+
+    .variable-chip:hover { background: #bee3f8; }
+
+    .preview-box {
+      background: #f8f9fa;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-light);
+      white-space: pre-wrap;
+      min-height: 80px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-light);
+    }
+
+    .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+    .output-format-select {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .rule-meta { font-size: 12px; color: var(--text-light); display: flex; gap: 16px; margin-top: 4px; }
+
+    @media (max-width: 900px) {
+      .rules-layout { grid-template-columns: 1fr; }
+      .rule-sidebar { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo">物业<span>品质</span>看板</div>
+    <nav>
+      <a href="index.html">首页</a>
+      <a href="project-dashboard.html">单项目看板</a>
+      <a href="scope-dashboard.html">多项目看板</a>
+      <a href="data-management.html">数据管理</a>
+      <a href="rules-config.html" class="active">规则配置</a>
+    </nav>
+  </div>
+
+  <div class="page-wrapper">
+    <div class="page-header">
+      <div class="page-title">分析规则配置</div>
+      <button class="btn btn-primary" onclick="openAddModal()">+ 新增规则</button>
+    </div>
+
+    <div class="rules-layout">
+      <!-- Sidebar -->
+      <div class="rule-sidebar">
+        <div class="rule-sidebar-header">规则列表</div>
+        <div id="ruleSidebar"></div>
+      </div>
+
+      <!-- Detail Panel -->
+      <div id="ruleDetail">
+        <div class="card empty-state">
+          <div class="empty-icon">⚙️</div>
+          <p>请从左侧选择规则进行查看或编辑</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Rule Modal -->
+  <div class="modal-overlay" id="ruleModal">
+    <div class="modal" style="width:600px;max-width:95vw;">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">新增规则</div>
+        <button class="modal-close" onclick="closeRuleModal()">&times;</button>
+      </div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group">
+          <label>规则名称 *</label>
+          <input type="text" id="modal_name" placeholder="例：环境卫生分析规则">
+        </div>
+        <div class="form-group">
+          <label>规则类别 *</label>
+          <select id="modal_category">
+            <option value="analysis">问题分析</option>
+            <option value="suggestion">提升建议</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>规则说明</label>
+          <input type="text" id="modal_desc" placeholder="简要描述该规则的用途">
+        </div>
+        <div class="form-group full">
+          <label>输出格式</label>
+          <select id="modal_outputFormat" style="width:200px;">
+            <option value="段落文字">段落文字</option>
+            <option value="列表（编号）">列表（编号）</option>
+            <option value="列表（无序）">列表（无序）</option>
+            <option value="表格">表格</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>提示词模板</label>
+          <textarea id="modal_prompt" class="prompt-editor" style="min-height:180px;" placeholder="在此输入提示词，使用 {{变量名}} 引用数据字段"></textarea>
+        </div>
+        <div class="form-group full">
+          <label>可用变量（点击插入）</label>
+          <div class="variable-chips" id="modal_vars">
+            <span class="variable-chip" onclick="insertVar('projectName')">{{projectName}}</span>
+            <span class="variable-chip" onclick="insertVar('totalScore')">{{totalScore}}</span>
+            <span class="variable-chip" onclick="insertVar('grade')">{{grade}}</span>
+            <span class="variable-chip" onclick="insertVar('env')">{{env}}</span>
+            <span class="variable-chip" onclick="insertVar('safety')">{{safety}}</span>
+            <span class="variable-chip" onclick="insertVar('facility')">{{facility}}</span>
+            <span class="variable-chip" onclick="insertVar('green')">{{green}}</span>
+            <span class="variable-chip" onclick="insertVar('service')">{{service}}</span>
+            <span class="variable-chip" onclick="insertVar('issues')">{{issues}}</span>
+            <span class="variable-chip" onclick="insertVar('level')">{{level}}</span>
+            <span class="variable-chip" onclick="insertVar('city')">{{city}}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeRuleModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveRuleModal()">保存规则</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="width:380px;">
+      <div class="modal-header">
+        <div class="modal-title">确认删除</div>
+        <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <p style="color:var(--text-light);margin-bottom:8px;" id="deleteConfirmText">确定要删除该规则吗？</p>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeDeleteModal()">取消</button>
+        <button class="btn btn-danger" onclick="confirmDeleteRule()">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/mock-data.js"></script>
+  <script src="js/rules-config.js"></script>
+</body>
+</html>

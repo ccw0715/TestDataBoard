@@ -307,7 +307,7 @@ function renderAnalysis() {
       ${moduleBlocks}
     </div>
     <div class="analysis-block" style="border-left-color:var(--info);">
-      <div class="analysis-title">AI 综合分析</div>
+      <div class="analysis-title">综合分析</div>
       <p>${p.aiAnalysis}</p>
     </div>
   `;
