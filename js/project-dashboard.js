@@ -120,51 +120,85 @@ function switchTrend(type, btn) {
 
 function renderBar(type) {
   const p = currentProject;
-  const labels = ['环境卫生', '安全管理', '设施设备', '绿化养护', '客户服务'];
   const keys = ['env', 'safety', 'facility', 'green', 'service'];
-  const current = keys.map(k => p.scores[k]);
-  const compare = keys.map(k => type === 'yoy' ? p.history.lastYear[k] : p.history.lastMonth[k]);
-  const compareLabel = type === 'yoy' ? '去年同期' : '上月';
+  const moduleLabels = ['环境卫生', '安全管理', '设施设备', '绿化养护', '客户服务'];
 
   if (barChart) barChart.destroy();
-  barChart = new Chart(document.getElementById('barChart'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: '本期',
-          data: current,
-          backgroundColor: '#c0392b',
-          borderRadius: 4,
-        },
-        {
-          label: compareLabel,
-          data: compare,
-          backgroundColor: '#95a5a6',
-          borderRadius: 4,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: { min: 60, max: 100, ticks: { stepSize: 10 } },
+
+  if (type === 'yoy') {
+    // 同比：本期 vs 去年同期，按模块分组柱状图
+    const current = keys.map(k => p.scores[k]);
+    const compare = keys.map(k => p.history.lastYear[k]);
+    barChart = new Chart(document.getElementById('barChart'), {
+      type: 'bar',
+      data: {
+        labels: moduleLabels,
+        datasets: [
+          { label: '本期', data: current, backgroundColor: '#c0392b', borderRadius: 4 },
+          { label: '去年同期', data: compare, backgroundColor: '#95a5a6', borderRadius: 4 },
+        ],
       },
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: {
-          callbacks: {
-            afterLabel: (ctx) => {
-              const diff = current[ctx.dataIndex] - compare[ctx.dataIndex];
-              return `变化：${diff >= 0 ? '+' : ''}${diff.toFixed(2)}分`;
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { min: 60, max: 100, ticks: { stepSize: 10 } } },
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              afterLabel: (ctx) => {
+                const diff = current[ctx.dataIndex] - compare[ctx.dataIndex];
+                return `变化：${diff >= 0 ? '+' : ''}${diff.toFixed(2)}分`;
+              },
             },
           },
         },
       },
-    },
-  });
+    });
+  } else {
+    // 环比：前三次检查 + 本期，展示总分趋势折线图
+    const prev = p.history.prevInspections || [];
+    const timeLabels = [...prev.map(h => h.date), `${p.inspectTime}（本期）`];
+    const colors = ['#3498db', '#9b59b6', '#e67e22', '#c0392b'];
+
+    const datasets = keys.map((k, i) => {
+      const pastData = prev.map(h => h[k]);
+      return {
+        label: moduleLabels[i],
+        data: [...pastData, p.scores[k]],
+        borderColor: ['#c0392b', '#e67e22', '#3498db', '#27ae60', '#9b59b6'][i],
+        backgroundColor: 'transparent',
+        pointBackgroundColor: ['#c0392b', '#e67e22', '#3498db', '#27ae60', '#9b59b6'][i],
+        borderWidth: 2,
+        pointRadius: 4,
+        tension: 0.3,
+      };
+    });
+
+    barChart = new Chart(document.getElementById('barChart'), {
+      type: 'line',
+      data: { labels: timeLabels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { min: 60, max: 100, ticks: { stepSize: 10 } } },
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              afterLabel: (ctx) => {
+                const ds = ctx.dataset.data;
+                const idx = ctx.dataIndex;
+                if (idx === 0) return '';
+                const diff = ds[idx] - ds[idx - 1];
+                return `较上次：${diff >= 0 ? '+' : ''}${diff.toFixed(2)}分`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }
 }
 
 function renderPenalty() {
@@ -228,9 +262,36 @@ function renderAnalysis() {
     (goodModules.length > 0 ? `优秀以上模块：${goodModules.join('、')}；` : '') +
     (badModules.length > 0 ? `良好以下模块：${badModules.join('、')}。` : '各模块表现均衡。');
 
-  const issues = p.issues.length > 0
-    ? p.issues.map(i => `<li style="margin-bottom:6px;color:var(--text-light);">• ${i}</li>`).join('')
-    : '<li style="color:var(--success);">• 本期未发现重大问题</li>';
+  // 每个模块的相关问题（按模块名匹配）
+  const moduleIssueMap = {};
+  keys.forEach(k => { moduleIssueMap[k] = []; });
+  const moduleKeywords = { env: ['环境', '清洁', '卫生', '垃圾', '漂浮'], safety: ['安全', '消防', '燃', '电梯机房', '通道'], facility: ['设施', '设备', '电梯', '维修', '老化'], green: ['绿化', '植', '养护', '裸露'], service: ['服务', '员工', '着装', '应答'] };
+  (p.issues || []).forEach(issue => {
+    let assigned = false;
+    for (const [k, kws] of Object.entries(moduleKeywords)) {
+      if (kws.some(kw => issue.includes(kw))) { moduleIssueMap[k].push(issue); assigned = true; break; }
+    }
+    if (!assigned) moduleIssueMap['env'].push(issue);
+  });
+
+  const moduleBlocks = keys.map(k => {
+    const score = s[k];
+    const grade = getGrade(score);
+    const label = MODULE_LABELS[k];
+    const issues = moduleIssueMap[k];
+    const borderColor = score >= 93 ? 'var(--success)' : score >= 88 ? 'var(--info)' : score >= 83 ? 'var(--warning)' : 'var(--danger)';
+    const issueHtml = issues.length > 0
+      ? `<ul style="list-style:none;margin-top:6px;">${issues.map(i => `<li style="color:var(--text-light);font-size:12px;margin-bottom:4px;">• ${i}</li>`).join('')}</ul>`
+      : `<p style="color:var(--success);font-size:12px;margin-top:6px;">✓ 本期未发现问题</p>`;
+    return `<div class="analysis-block" style="border-left-color:${borderColor};">
+      <div class="analysis-title" style="display:flex;align-items:center;gap:8px;">
+        ${label}
+        <span style="font-size:22px;font-weight:700;color:${borderColor};">${score}</span>
+        <span class="grade-badge ${grade.className}" style="font-size:11px;">${grade.label}</span>
+      </div>
+      ${issueHtml}
+    </div>`;
+  }).join('');
 
   document.getElementById('analysisContent').innerHTML = `
     <div class="analysis-block">
@@ -241,9 +302,9 @@ function renderAnalysis() {
         ${badModules.map(m => `<span class="module-tag tag-bad">✗ ${m}</span>`).join('')}
       </div>
     </div>
-    <div class="analysis-block">
-      <div class="analysis-title">模块分析 — 主要问题</div>
-      <ul style="list-style:none;">${issues}</ul>
+    <div style="margin-bottom:4px;font-size:13px;font-weight:600;color:var(--text);">各模块分析</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      ${moduleBlocks}
     </div>
     <div class="analysis-block" style="border-left-color:var(--info);">
       <div class="analysis-title">AI 综合分析</div>
@@ -266,7 +327,7 @@ function renderSuggestion() {
       <ul style="list-style:none;">${items}</ul>
     </div>
     <div class="analysis-block" style="border-left-color:var(--info);">
-      <div class="analysis-title">AI 提升建议</div>
+      <div class="analysis-title">提升建议</div>
       <p style="color:var(--text-light);line-height:1.8;">${p.aiSuggestion}</p>
     </div>
   `;

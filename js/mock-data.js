@@ -36,6 +36,11 @@ const RAW_PROJECTS = [
     history: {
       lastYear: { env: 87.2, safety: 82.1, facility: 85.3, green: 72.0, service: 90.5 },
       lastMonth: { env: 88.5, safety: 83.2, facility: 86.1, green: 73.5, service: 91.4 },
+      prevInspections: [
+        { date: '2025-05-10', env: 85.1, safety: 80.3, facility: 83.2, green: 71.5, service: 89.6 },
+        { date: '2025-06-15', env: 87.4, safety: 82.8, facility: 85.9, green: 72.8, service: 91.0 },
+        { date: '2025-07-20', env: 88.5, safety: 83.2, facility: 86.1, green: 73.5, service: 91.4 },
+      ],
     },
     issues: [
       '项目楼栋内堆放易燃杂物较多，存在安全隐患，楼栋天面多个电梯机房未关闭',
@@ -75,6 +80,11 @@ const RAW_PROJECTS = [
     history: {
       lastYear: { env: 75.1, safety: 78.5, facility: 87.2, green: 74.0, service: 80.3 },
       lastMonth: { env: 76.8, safety: 79.6, facility: 88.5, green: 75.0, service: 81.2 },
+      prevInspections: [
+        { date: '2025-05-08', env: 74.2, safety: 77.1, facility: 86.0, green: 73.2, service: 79.5 },
+        { date: '2025-06-12', env: 75.9, safety: 78.4, facility: 87.3, green: 74.1, service: 80.8 },
+        { date: '2025-07-18', env: 76.8, safety: 79.6, facility: 88.5, green: 75.0, service: 81.2 },
+      ],
     },
     issues: [
       '环境卫生问题较多，楼道清洁频率不足',
@@ -110,6 +120,11 @@ const RAW_PROJECTS = [
     history: {
       lastYear: { env: 88.5, safety: 86.2, facility: 91.3, green: 83.5, service: 88.7 },
       lastMonth: { env: 90.1, safety: 87.8, facility: 92.5, green: 84.9, service: 89.6 },
+      prevInspections: [
+        { date: '2025-05-06', env: 88.0, safety: 85.5, facility: 90.8, green: 82.9, service: 88.1 },
+        { date: '2025-06-10', env: 89.3, safety: 86.7, facility: 91.9, green: 83.8, service: 89.0 },
+        { date: '2025-07-15', env: 90.1, safety: 87.8, facility: 92.5, green: 84.9, service: 89.6 },
+      ],
     },
     issues: ['绿化养护需进一步提升精细化程度'],
     suggestions: ['建立绿化养护月度计划，提升绿化品质'],
@@ -136,6 +151,11 @@ const RAW_PROJECTS = [
     history: {
       lastYear: { env: 93.1, safety: 92.5, facility: 95.2, green: 91.8, service: 95.6 },
       lastMonth: { env: 94.7, safety: 93.6, facility: 96.1, green: 92.9, service: 96.8 },
+      prevInspections: [
+        { date: '2025-05-05', env: 93.5, safety: 92.0, facility: 95.5, green: 91.2, service: 95.8 },
+        { date: '2025-06-08', env: 94.1, safety: 93.0, facility: 96.0, green: 92.3, service: 96.5 },
+        { date: '2025-07-12', env: 94.7, safety: 93.6, facility: 96.1, green: 92.9, service: 96.8 },
+      ],
     },
     issues: [],
     suggestions: ['继续保持现有管理水平，可作为区域标杆项目进行推广交流'],
@@ -167,6 +187,11 @@ const RAW_PROJECTS = [
     history: {
       lastYear: { env: 80.5, safety: 83.2, facility: 80.1, green: 77.5, service: 82.8 },
       lastMonth: { env: 82.3, safety: 84.9, facility: 81.7, green: 78.9, service: 83.6 },
+      prevInspections: [
+        { date: '2025-05-07', env: 80.0, safety: 82.5, facility: 79.8, green: 77.0, service: 82.1 },
+        { date: '2025-06-11', env: 81.2, safety: 83.7, facility: 80.9, green: 78.1, service: 82.9 },
+        { date: '2025-07-16', env: 82.3, safety: 84.9, facility: 81.7, green: 78.9, service: 83.6 },
+      ],
     },
     issues: [
       'B区停车场消防通道被车辆占用，存在安全隐患',
