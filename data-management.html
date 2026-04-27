@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据管理 - 第三方数据看板</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo">物业<span>品质</span>看板</div>
+    <nav>
+      <a href="index.html">首页</a>
+      <a href="project-dashboard.html">单项目看板</a>
+      <a href="scope-dashboard.html">多项目看板</a>
+      <a href="data-management.html" class="active">数据管理</a>
+    </nav>
+  </div>
+
+  <div class="page-wrapper">
+    <div class="page-header">
+      <div class="page-title">项目数据管理</div>
+      <button class="btn btn-primary" onclick="openAddModal()">+ 新增项目</button>
+    </div>
+
+    <div class="mgmt-layout">
+      <!-- Project List -->
+      <div class="project-list-panel">
+        <div class="project-list-header">
+          <span>项目列表</span>
+          <span id="projectCount" style="font-size:12px;color:var(--text-light);"></span>
+        </div>
+        <div class="project-list-items" id="projectListItems"></div>
+      </div>
+
+      <!-- Edit Panel -->
+      <div id="editPanel">
+        <div class="card" style="color:var(--text-light);text-align:center;padding:60px;">
+          请从左侧选择项目进行编辑
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Project Modal -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">新增项目</div>
+        <button class="modal-close" onclick="closeAddModal()">&times;</button>
+      </div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group">
+          <label>项目名称 *</label>
+          <input type="text" id="new_name" placeholder="请输入项目名称">
+        </div>
+        <div class="form-group">
+          <label>城市 *</label>
+          <input type="text" id="new_city" placeholder="如：广州">
+        </div>
+        <div class="form-group">
+          <label>区域公司 *</label>
+          <select id="new_region">
+            <option value="广州公司">广州公司</option>
+            <option value="佛清肇公司">佛清肇公司</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>项目等级</label>
+          <select id="new_level">
+            <option>紫金花</option>
+            <option>金百合</option>
+            <option>向日葵</option>
+            <option>郁金香</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>管理费单价（元/㎡）</label>
+          <input type="number" id="new_unitPrice" value="2.0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>面积（㎡）</label>
+          <input type="number" id="new_area" value="10000">
+        </div>
+        <div class="form-group">
+          <label>检查人员</label>
+          <input type="text" id="new_inspector" placeholder="检查人员姓名">
+        </div>
+        <div class="form-group">
+          <label>检查时间</label>
+          <input type="date" id="new_inspectTime" value="2025-08-01">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAddModal()">取消</button>
+        <button class="btn btn-primary" onclick="addProject_ui()">确认新增</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="width:380px;">
+      <div class="modal-header">
+        <div class="modal-title">确认删除</div>
+        <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <p style="color:var(--text-light);margin-bottom:8px;" id="deleteConfirmText">确定要删除该项目吗？此操作不可撤销。</p>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeDeleteModal()">取消</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/mock-data.js"></script>
+  <script src="js/data-management.js"></script>
+</body>
+</html>

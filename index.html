@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第三方数据看板</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo">物业<span>品质</span>看板</div>
+    <nav>
+      <a href="index.html" class="active">首页</a>
+      <a href="project-dashboard.html">单项目看板</a>
+      <a href="scope-dashboard.html">多项目看板</a>
+      <a href="data-management.html">数据管理</a>
+    </nav>
+  </div>
+
+  <main>
+    <div style="width:100%;max-width:1000px;">
+      <div class="home-hero">
+        <h1>第三方品质检查数据看板</h1>
+        <p>基于第三方检查数据，提供多维度的项目品质分析与管理支持</p>
+      </div>
+      <div class="nav-cards">
+        <a href="project-dashboard.html" class="nav-card">
+          <div class="icon">📊</div>
+          <h3>单项目看板</h3>
+          <p>选择特定项目，查看详细得分、雷达图、同比环比趋势、问题分析与AI建议</p>
+        </a>
+        <a href="scope-dashboard.html" class="nav-card">
+          <div class="icon">🗺️</div>
+          <h3>多项目看板</h3>
+          <p>按区域公司、城市、项目等级等条件筛选，对比多项目得分排名与模块分析</p>
+        </a>
+        <a href="data-management.html" class="nav-card">
+          <div class="icon">⚙️</div>
+          <h3>数据管理</h3>
+          <p>新增、编辑项目数据字段，配置检查标准点位与处罚考核规则</p>
+        </a>
+      </div>
+      <div style="text-align:center;margin-top:32px;color:var(--text-light);font-size:13px;">
+        系统版本 v1.0 &nbsp;|&nbsp; 数据更新：2025-08-04
+      </div>
+    </div>
+  </main>
+</body>
+</html>

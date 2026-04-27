@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多项目看板 - 第三方数据看板</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo">物业<span>品质</span>看板</div>
+    <nav>
+      <a href="index.html">首页</a>
+      <a href="project-dashboard.html">单项目看板</a>
+      <a href="scope-dashboard.html" class="active">多项目看板</a>
+      <a href="data-management.html">数据管理</a>
+    </nav>
+  </div>
+
+  <div class="page-wrapper">
+    <!-- Filters -->
+    <div class="filter-panel">
+      <div class="filter-section-label">时间段</div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>开始时间</label>
+          <input type="date" id="startDate" value="2025-07-01">
+        </div>
+        <div class="filter-group">
+          <label>结束时间</label>
+          <input type="date" id="endDate" value="2025-08-31">
+        </div>
+      </div>
+      <div class="filter-section-label">项目范围</div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>区域公司</label>
+          <select id="regionSel" onchange="onRegionChange()"></select>
+        </div>
+        <div class="filter-group">
+          <label>城市</label>
+          <select id="citySel" onchange="applyFilters()"></select>
+        </div>
+        <div class="filter-group">
+          <label>项目等级</label>
+          <select id="levelSel" onchange="applyFilters()"></select>
+        </div>
+        <div class="filter-group">
+          <label>项目</label>
+          <select id="projectSel" onchange="applyFilters()"></select>
+        </div>
+      </div>
+      <div class="filter-section-label">标准范围</div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>专业模块</label>
+          <select id="moduleSel" onchange="applyFilters()"></select>
+        </div>
+      </div>
+      <div class="filter-section-label">质量结果</div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>评分等级</label>
+          <select id="gradeSel" onchange="applyFilters()"></select>
+        </div>
+        <div class="filter-group">
+          <label>红线</label>
+          <select id="redlineSel" onchange="applyFilters()">
+            <option value="">总体（默认）</option>
+            <option value="yes">有红线</option>
+            <option value="no">无红线</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>最低分值</label>
+          <input type="number" id="minScore" placeholder="如 80" min="0" max="100" oninput="applyFilters()" style="width:100px;">
+        </div>
+        <div class="filter-group">
+          <label>最高分值</label>
+          <input type="number" id="maxScore" placeholder="如 100" min="0" max="100" oninput="applyFilters()" style="width:100px;">
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:8px;">
+          <button class="btn btn-primary" onclick="applyFilters()">查询</button>
+          <button class="btn btn-secondary" onclick="resetFilters()">重置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Table -->
+    <div class="card">
+      <div class="card-title" id="tableTitle">输出内容</div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="summaryTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable('name')">项目 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('total')">总得分 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('env')">环境得分 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('safety')">安全得分 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('facility')">设施得分 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('green')">绿化得分 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('service')">服务得分 <span class="sort-icon">↕</span></th>
+              <th>等级</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="card">
+        <div class="card-title">各项目总分对比</div>
+        <div class="chart-container" style="height:280px;">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">模块平均得分雷达图</div>
+        <div class="chart-container">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rankings -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div class="card">
+        <div class="card-title">总分排名</div>
+        <ul class="rank-list" id="totalRank"></ul>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          模块排名
+          <select id="rankModuleSel" onchange="renderModuleRank()" style="margin-left:auto;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:12px;">
+            <option value="env">环境卫生</option>
+            <option value="safety">安全管理</option>
+            <option value="facility">设施设备</option>
+            <option value="green">绿化养护</option>
+            <option value="service">客户服务</option>
+          </select>
+        </div>
+        <ul class="rank-list" id="moduleRank"></ul>
+      </div>
+    </div>
+
+    <!-- Analysis -->
+    <div class="card">
+      <div class="card-title">问题分析</div>
+      <div id="scopeAnalysis"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">提升建议</div>
+      <div id="scopeSuggestion"></div>
+    </div>
+  </div>
+
+  <script src="js/mock-data.js"></script>
+  <script src="js/scope-dashboard.js"></script>
+</body>
+</html>

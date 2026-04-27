@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>单项目看板 - 第三方数据看板</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo">物业<span>品质</span>看板</div>
+    <nav>
+      <a href="index.html">首页</a>
+      <a href="project-dashboard.html" class="active">单项目看板</a>
+      <a href="scope-dashboard.html">多项目看板</a>
+      <a href="data-management.html">数据管理</a>
+    </nav>
+  </div>
+
+  <div class="page-wrapper">
+    <!-- Filter -->
+    <div class="filter-panel">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>选择项目</label>
+          <select id="projectSelect" style="min-width:220px;"></select>
+        </div>
+        <div style="display:flex;align-items:flex-end;">
+          <button class="btn btn-primary" onclick="renderPage()">查询</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Info -->
+    <div class="card" id="infoCard">
+      <div class="card-title">项目基本信息</div>
+      <div class="info-grid" id="infoGrid"></div>
+    </div>
+
+    <!-- Score Cards -->
+    <div class="score-cards" id="scoreCards"></div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="card">
+        <div class="card-title">模块得分雷达图</div>
+        <div class="chart-container">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          得分趋势对比
+          <div class="tabs" style="margin-left:auto;margin-bottom:0;border:none;">
+            <button class="tab-btn active" onclick="switchTrend('yoy',this)">同比</button>
+            <button class="tab-btn" onclick="switchTrend('mom',this)">环比</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Penalty -->
+    <div class="card" id="penaltyCard">
+      <div class="card-title">处罚考核</div>
+      <div id="penaltyContent"></div>
+    </div>
+
+    <!-- Analysis -->
+    <div class="card">
+      <div class="card-title">问题分析</div>
+      <div id="analysisContent"></div>
+    </div>
+
+    <!-- Suggestion -->
+    <div class="card">
+      <div class="card-title">提升建议</div>
+      <div id="suggestionContent"></div>
+    </div>
+  </div>
+
+  <script src="js/mock-data.js"></script>
+  <script src="js/project-dashboard.js"></script>
+</body>
+</html>
