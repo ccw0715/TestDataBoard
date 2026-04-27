@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>工单看板 - 第三方数据看板</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      text-align: center;
+      border-top: 3px solid var(--border);
+    }
+
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .stat-card .stat-label {
+      font-size: 12px;
+      color: var(--text-light);
+      margin-top: 4px;
+    }
+
+    .stat-card .stat-sub {
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .stat-total { border-top-color: var(--text); }
+    .stat-consulting { border-top-color: #5b8dd9; }
+    .stat-complaint { border-top-color: var(--warning); }
+    .stat-repair { border-top-color: #9b59b6; }
+    .stat-pending { border-top-color: var(--danger); }
+
+    .wo-table .category-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .tag-consulting { background: #e8f0fb; color: #2c6fbe; }
+    .tag-complaint  { background: #fef3e2; color: #c0680a; }
+    .tag-repair     { background: #f3e8fb; color: #7d3c98; }
+
+    .bool-yes { color: var(--success); font-weight: 600; }
+    .bool-no  { color: var(--danger);  font-weight: 600; }
+    .bool-na  { color: var(--text-light); }
+
+    .overdue-yes { color: var(--danger); font-weight: 600; }
+    .overdue-no  { color: var(--success); }
+
+    .completed-yes { color: var(--success); font-weight: 600; }
+    .completed-no  { color: var(--warning); font-weight: 600; }
+
+    .charts-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .wo-filter-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .filter-chip {
+      padding: 4px 14px;
+      border-radius: 16px;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-light);
+      transition: all 0.15s;
+    }
+
+    .filter-chip.active {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    @media (max-width: 1100px) {
+      .stat-cards { grid-template-columns: repeat(3, 1fr); }
+      .charts-grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo">物业<span>品质</span>看板</div>
+    <nav>
+      <a href="index.html">首页</a>
+      <a href="project-dashboard.html">单项目看板</a>
+      <a href="scope-dashboard.html">多项目看板</a>
+      <a href="workorder-dashboard.html" class="active">工单看板</a>
+      <a href="data-management.html">数据管理</a>
+      <a href="rules-config.html">规则配置</a>
+    </nav>
+  </div>
+
+  <div class="page-wrapper">
+    <!-- Filters -->
+    <div class="filter-panel">
+      <div class="filter-section-label">时间段</div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>开始时间</label>
+          <input type="date" id="startDate" value="2025-08-01">
+        </div>
+        <div class="filter-group">
+          <label>结束时间</label>
+          <input type="date" id="endDate" value="2025-08-31">
+        </div>
+      </div>
+      <div class="filter-section-label">项目范围</div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>区域公司</label>
+          <select id="regionSel" onchange="onRegionChange()"></select>
+        </div>
+        <div class="filter-group">
+          <label>城市</label>
+          <select id="citySel" onchange="updateProjectSel(); applyFilters()"></select>
+        </div>
+        <div class="filter-group">
+          <label>项目</label>
+          <select id="projectSel" onchange="applyFilters()"></select>
+        </div>
+        <div class="filter-group">
+          <label>工单分类</label>
+          <select id="categorySel" onchange="applyFilters()">
+            <option value="">全部</option>
+            <option value="consulting">咨询类</option>
+            <option value="complaint">投诉类</option>
+            <option value="repair">维修类</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>是否有效</label>
+          <select id="validSel" onchange="applyFilters()">
+            <option value="">全部</option>
+            <option value="yes">是（生成工单）</option>
+            <option value="no">否</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>是否完成</label>
+          <select id="completedSel" onchange="applyFilters()">
+            <option value="">全部</option>
+            <option value="yes">是</option>
+            <option value="no">否</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>是否超时</label>
+          <select id="overdueSel" onchange="applyFilters()">
+            <option value="">全部</option>
+            <option value="yes">是</option>
+            <option value="no">否</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:8px;">
+          <button class="btn btn-primary" onclick="applyFilters()">查询</button>
+          <button class="btn btn-secondary" onclick="resetFilters()">重置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stat-cards" id="statCards"></div>
+
+    <!-- Charts -->
+    <div class="charts-grid-3">
+      <div class="card">
+        <div class="card-title">工单类型分布</div>
+        <div class="chart-container" style="height:220px;">
+          <canvas id="categoryPieChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">各项目工单量</div>
+        <div class="chart-container" style="height:220px;">
+          <canvas id="projectBarChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">完成 / 超时 / 满意度</div>
+        <div class="chart-container" style="height:220px;">
+          <canvas id="statusBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+      <div class="card-title">
+        <span id="tableTitle">工单列表</span>
+        <div class="wo-filter-chips" id="filterChips" style="margin-left:16px;margin-bottom:0;"></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table wo-table" id="woTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable('id')">序号 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('issue')">工单问题 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('category')">问题分类 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('attitude')">服务态度 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('valid')">是否有效 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('handler')">责任人 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('completed')">是否完成 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('deadline')">关单时限 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('handleTime')">处理时长(h) <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('overdue')">是否超时 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('satisfied')">是否满意 <span class="sort-icon">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="woTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/mock-data.js"></script>
+  <script src="js/workorder-dashboard.js"></script>
+</body>
+</html>
