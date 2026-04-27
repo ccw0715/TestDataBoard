@@ -149,12 +149,17 @@
           <select id="projectSel" onchange="applyFilters()"></select>
         </div>
         <div class="filter-group">
-          <label>工单分类</label>
-          <select id="categorySel" onchange="applyFilters()">
+          <label>工单分类（一级）</label>
+          <select id="categorySel" onchange="onCategoryChange(); applyFilters()">
             <option value="">全部</option>
-            <option value="consulting">咨询类</option>
-            <option value="complaint">投诉类</option>
             <option value="repair">维修类</option>
+            <option value="non_repair">非维修类</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>工单分类（二级）</label>
+          <select id="subCategorySel" onchange="applyFilters()">
+            <option value="">全部</option>
           </select>
         </div>
         <div class="filter-group">
@@ -219,7 +224,8 @@
             <tr>
               <th onclick="sortTable('id')">序号 <span class="sort-icon">↕</span></th>
               <th onclick="sortTable('issue')">工单问题 <span class="sort-icon">↕</span></th>
-              <th onclick="sortTable('category')">问题分类 <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('category')">问题分类（一级） <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('subCategory')">问题分类（二级） <span class="sort-icon">↕</span></th>
               <th onclick="sortTable('attitude')">服务态度 <span class="sort-icon">↕</span></th>
               <th onclick="sortTable('valid')">是否有效 <span class="sort-icon">↕</span></th>
               <th onclick="sortTable('handler')">责任人 <span class="sort-icon">↕</span></th>

@@ -424,32 +424,40 @@ function deleteRule(id) {
 
 // ---- 工单数据 ----
 const WORK_ORDER_CATEGORIES = {
-  consulting: { label: '咨询类', icon: '📋', color: '#5b8dd9', bg: '#e8f0fb', desc: '费用/政策/信息查询' },
-  complaint: { label: '投诉类', icon: '⚠️', color: '#e67e22', bg: '#fef3e2', desc: '服务/质量/管理投诉' },
-  repair: { label: '维修类', icon: '🔧', color: '#9b59b6', bg: '#f3e8fb', desc: '设备/设施报修' },
+  repair:     { label: '维修类',   icon: '🔧', color: '#9b59b6', bg: '#f3e8fb', desc: '设备/设施报修' },
+  non_repair: { label: '非维修类', icon: '📋', color: '#5b8dd9', bg: '#e8f0fb', desc: '咨询/投诉/其他' },
+};
+
+const WORK_ORDER_SUBCATEGORIES = {
+  device_repair:   { label: '设备维修', parent: 'repair',     icon: '⚙️' },
+  facility_repair: { label: '设施报修', parent: 'repair',     icon: '🏗️' },
+  consulting:      { label: '咨询',     parent: 'non_repair', icon: '💬' },
+  complaint:       { label: '投诉',     parent: 'non_repair', icon: '⚠️' },
+  housekeeping:    { label: '家政',     parent: 'non_repair', icon: '🧹' },
+  suggestion:      { label: '建议',     parent: 'non_repair', icon: '💡' },
 };
 
 const RAW_WORK_ORDERS = [
-  { id: 'WO001', projectId: 'P001', issue: '电梯故障，无法正常运行', category: 'repair', attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-03', handleTime: 4.5, overdue: false, satisfied: true },
-  { id: 'WO002', projectId: 'P001', issue: '停车费用收取标准疑问', category: 'consulting', attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-02', handleTime: 1.2, overdue: false, satisfied: true },
-  { id: 'WO003', projectId: 'P001', issue: '保洁人员态度恶劣，言语冲突', category: 'complaint', attitude: '态度恶劣', valid: true, handler: '陈主管', completed: true, deadline: '2025-08-02', handleTime: 8.0, overdue: true, satisfied: false },
-  { id: 'WO004', projectId: 'P001', issue: '公共区域灯光损坏未修复', category: 'repair', attitude: '态度良好', valid: true, handler: '张技师', completed: false, deadline: '2025-08-05', handleTime: null, overdue: false, satisfied: null },
-  { id: 'WO005', projectId: 'P001', issue: '小区绿化养护问题反映', category: 'complaint', attitude: '态度良好', valid: false, handler: '王客服', completed: true, deadline: '2025-08-04', handleTime: 2.0, overdue: false, satisfied: true },
-  { id: 'WO006', projectId: 'P002', issue: '水管漏水，墙面渗水', category: 'repair', attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-03', handleTime: 6.0, overdue: false, satisfied: true },
-  { id: 'WO007', projectId: 'P002', issue: '物业费计算规则咨询', category: 'consulting', attitude: '态度良好', valid: true, handler: '陈客服', completed: true, deadline: '2025-08-02', handleTime: 0.8, overdue: false, satisfied: true },
-  { id: 'WO008', projectId: 'P002', issue: '安保人员不文明执勤投诉', category: 'complaint', attitude: '态度恶劣', valid: true, handler: '刘主管', completed: false, deadline: '2025-08-04', handleTime: null, overdue: true, satisfied: null },
-  { id: 'WO009', projectId: 'P002', issue: '健身设施损坏报修', category: 'repair', attitude: '态度良好', valid: true, handler: '张技师', completed: true, deadline: '2025-08-05', handleTime: 12.0, overdue: true, satisfied: false },
-  { id: 'WO010', projectId: 'P003', issue: '消防设施检查询问', category: 'consulting', attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-02', handleTime: 1.5, overdue: false, satisfied: true },
-  { id: 'WO011', projectId: 'P003', issue: '停车位划分不合理投诉', category: 'complaint', attitude: '态度良好', valid: true, handler: '陈主管', completed: true, deadline: '2025-08-03', handleTime: 5.0, overdue: false, satisfied: true },
-  { id: 'WO012', projectId: 'P003', issue: '门禁系统故障', category: 'repair', attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-02', handleTime: 3.0, overdue: false, satisfied: true },
-  { id: 'WO013', projectId: 'P004', issue: '装修管理规定咨询', category: 'consulting', attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-01', handleTime: 0.5, overdue: false, satisfied: true },
-  { id: 'WO014', projectId: 'P004', issue: '楼上噪音扰民投诉', category: 'complaint', attitude: '态度良好', valid: true, handler: '刘主管', completed: true, deadline: '2025-08-03', handleTime: 4.0, overdue: false, satisfied: true },
-  { id: 'WO015', projectId: 'P004', issue: '路灯损坏报修', category: 'repair', attitude: '态度良好', valid: true, handler: '张技师', completed: true, deadline: '2025-08-02', handleTime: 2.5, overdue: false, satisfied: true },
-  { id: 'WO016', projectId: 'P005', issue: '车辆被贴条咨询', category: 'consulting', attitude: '态度恶劣', valid: false, handler: '陈客服', completed: true, deadline: '2025-08-03', handleTime: 1.0, overdue: false, satisfied: false },
-  { id: 'WO017', projectId: 'P005', issue: '消防通道被占用投诉（业主反映）', category: 'complaint', attitude: '态度良好', valid: true, handler: '刘主管', completed: false, deadline: '2025-08-04', handleTime: null, overdue: true, satisfied: null },
-  { id: 'WO018', projectId: 'P005', issue: '单元门锁损坏报修', category: 'repair', attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-03', handleTime: 3.5, overdue: false, satisfied: true },
-  { id: 'WO019', projectId: 'P005', issue: '绿化破坏赔偿标准咨询', category: 'consulting', attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-04', handleTime: 2.0, overdue: false, satisfied: true },
-  { id: 'WO020', projectId: 'P002', issue: '地下停车场排水堵塞', category: 'repair', attitude: '态度良好', valid: true, handler: '李技师', completed: false, deadline: '2025-08-05', handleTime: null, overdue: false, satisfied: null },
+  { id: 'WO001', projectId: 'P001', issue: '电梯故障，无法正常运行', category: 'repair', subCategory: 'device_repair', attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-03', handleTime: 4.5, overdue: false, satisfied: true },
+  { id: 'WO002', projectId: 'P001', issue: '停车费用收取标准疑问', category: 'non_repair', subCategory: 'consulting', attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-02', handleTime: 1.2, overdue: false, satisfied: true },
+  { id: 'WO003', projectId: 'P001', issue: '保洁人员态度恶劣，言语冲突', category: 'non_repair', subCategory: 'complaint', attitude: '态度恶劣', valid: true, handler: '陈主管', completed: true, deadline: '2025-08-02', handleTime: 8.0, overdue: true, satisfied: false },
+  { id: 'WO004', projectId: 'P001', issue: '公共区域灯光损坏未修复', category: 'repair', subCategory: 'facility_repair', attitude: '态度良好', valid: true, handler: '张技师', completed: false, deadline: '2025-08-05', handleTime: null, overdue: false, satisfied: null },
+  { id: 'WO005', projectId: 'P001', issue: '小区绿化养护问题反映', category: 'non_repair', subCategory: 'suggestion', attitude: '态度良好', valid: false, handler: '王客服', completed: true, deadline: '2025-08-04', handleTime: 2.0, overdue: false, satisfied: true },
+  { id: 'WO006', projectId: 'P002', issue: '水管漏水，墙面渗水', category: 'repair', subCategory: 'facility_repair', attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-03', handleTime: 6.0, overdue: false, satisfied: true },
+  { id: 'WO007', projectId: 'P002', issue: '物业费计算规则咨询', category: 'non_repair', subCategory: 'consulting', attitude: '态度良好', valid: true, handler: '陈客服', completed: true, deadline: '2025-08-02', handleTime: 0.8, overdue: false, satisfied: true },
+  { id: 'WO008', projectId: 'P002', issue: '安保人员不文明执勤投诉', category: 'non_repair', subCategory: 'complaint', attitude: '态度恶劣', valid: true, handler: '刘主管', completed: false, deadline: '2025-08-04', handleTime: null, overdue: true, satisfied: null },
+  { id: 'WO009', projectId: 'P002', issue: '健身设施损坏报修', category: 'repair', subCategory: 'device_repair', attitude: '态度良好', valid: true, handler: '张技师', completed: true, deadline: '2025-08-05', handleTime: 12.0, overdue: true, satisfied: false },
+  { id: 'WO010', projectId: 'P003', issue: '消防设施检查询问', category: 'non_repair', subCategory: 'consulting', attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-02', handleTime: 1.5, overdue: false, satisfied: true },
+  { id: 'WO011', projectId: 'P003', issue: '停车位划分不合理投诉', category: 'non_repair', subCategory: 'complaint', attitude: '态度良好', valid: true, handler: '陈主管', completed: true, deadline: '2025-08-03', handleTime: 5.0, overdue: false, satisfied: true },
+  { id: 'WO012', projectId: 'P003', issue: '门禁系统故障', category: 'repair', subCategory: 'device_repair', attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-02', handleTime: 3.0, overdue: false, satisfied: true },
+  { id: 'WO013', projectId: 'P004', issue: '装修管理规定咨询', category: 'non_repair', subCategory: 'consulting', attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-01', handleTime: 0.5, overdue: false, satisfied: true },
+  { id: 'WO014', projectId: 'P004', issue: '楼上噪音扰民投诉', category: 'non_repair', subCategory: 'complaint', attitude: '态度良好', valid: true, handler: '刘主管', completed: true, deadline: '2025-08-03', handleTime: 4.0, overdue: false, satisfied: true },
+  { id: 'WO015', projectId: 'P004', issue: '路灯损坏报修', category: 'repair', subCategory: 'facility_repair', attitude: '态度良好', valid: true, handler: '张技师', completed: true, deadline: '2025-08-02', handleTime: 2.5, overdue: false, satisfied: true },
+  { id: 'WO016', projectId: 'P005', issue: '车辆被贴条咨询', category: 'non_repair', subCategory: 'consulting', attitude: '态度恶劣', valid: false, handler: '陈客服', completed: true, deadline: '2025-08-03', handleTime: 1.0, overdue: false, satisfied: false },
+  { id: 'WO017', projectId: 'P005', issue: '消防通道被占用投诉（业主反映）', category: 'non_repair', subCategory: 'complaint', attitude: '态度良好', valid: true, handler: '刘主管', completed: false, deadline: '2025-08-04', handleTime: null, overdue: true, satisfied: null },
+  { id: 'WO018', projectId: 'P005', issue: '单元门锁损坏报修', category: 'repair', subCategory: 'facility_repair', attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-03', handleTime: 3.5, overdue: false, satisfied: true },
+  { id: 'WO019', projectId: 'P005', issue: '绿化破坏赔偿标准咨询', category: 'non_repair', subCategory: 'consulting', attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-04', handleTime: 2.0, overdue: false, satisfied: true },
+  { id: 'WO020', projectId: 'P002', issue: '地下停车场排水堵塞', category: 'repair', subCategory: 'facility_repair', attitude: '态度良好', valid: true, handler: '李技师', completed: false, deadline: '2025-08-05', handleTime: null, overdue: false, satisfied: null },
 ];
 
 function getWorkOrders() {

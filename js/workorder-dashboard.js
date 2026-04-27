@@ -14,7 +14,16 @@ function init() {
   applyFilters();
 }
 
-function onRegionChange() {
+function onCategoryChange() {
+  const cat = document.getElementById('categorySel').value;
+  const subSel = document.getElementById('subCategorySel');
+  const subs = Object.entries(WORK_ORDER_SUBCATEGORIES)
+    .filter(([, v]) => !cat || v.parent === cat);
+  subSel.innerHTML = '<option value="">全部</option>' +
+    subs.map(([k, v]) => `<option value="${k}">${v.icon} ${v.label}</option>`).join('');
+}
+
+
   const region = document.getElementById('regionSel').value;
   const citySel = document.getElementById('citySel');
   let cities = ['总体（默认）'];
@@ -42,6 +51,7 @@ function applyFilters() {
   const city = document.getElementById('citySel').value;
   const projectId = document.getElementById('projectSel').value;
   const category = document.getElementById('categorySel').value;
+  const subCategory = document.getElementById('subCategorySel').value;
   const valid = document.getElementById('validSel').value;
   const completed = document.getElementById('completedSel').value;
   const overdue = document.getElementById('overdueSel').value;
@@ -54,6 +64,7 @@ function applyFilters() {
 
   let orders = getWorkOrders().filter(o => projectIds.has(o.projectId));
   if (category) orders = orders.filter(o => o.category === category);
+  if (subCategory) orders = orders.filter(o => o.subCategory === subCategory);
   if (valid === 'yes') orders = orders.filter(o => o.valid === true);
   if (valid === 'no') orders = orders.filter(o => o.valid === false);
   if (completed === 'yes') orders = orders.filter(o => o.completed === true);
@@ -69,6 +80,8 @@ function resetFilters() {
   document.getElementById('regionSel').value = '总体（默认）';
   onRegionChange();
   document.getElementById('categorySel').value = '';
+  onCategoryChange();
+  document.getElementById('subCategorySel').value = '';
   document.getElementById('validSel').value = '';
   document.getElementById('completedSel').value = '';
   document.getElementById('overdueSel').value = '';
@@ -86,9 +99,8 @@ function renderAll(projects) {
 function renderStatCards() {
   const orders = filteredOrders;
   const total = orders.length;
-  const consulting = orders.filter(o => o.category === 'consulting').length;
-  const complaint = orders.filter(o => o.category === 'complaint').length;
   const repair = orders.filter(o => o.category === 'repair').length;
+  const non_repair = orders.filter(o => o.category === 'non_repair').length;
   const pending = orders.filter(o => !o.completed).length;
   const overdue = orders.filter(o => o.overdue).length;
   const satisfied = orders.filter(o => o.satisfied === true).length;
@@ -103,20 +115,15 @@ function renderStatCards() {
       <div class="stat-label">工单总数</div>
       <div class="stat-sub" style="color:var(--text-light);">完成率 ${completedRate}%</div>
     </div>
-    <div class="stat-card stat-consulting">
-      <div class="stat-value" style="color:#2c6fbe;">📋 ${consulting}</div>
-      <div class="stat-label">咨询类</div>
-      <div class="stat-sub" style="color:#5b8dd9;">${total > 0 ? Math.round(consulting/total*100) : 0}%</div>
-    </div>
-    <div class="stat-card stat-complaint">
-      <div class="stat-value" style="color:var(--warning);">⚠️ ${complaint}</div>
-      <div class="stat-label">投诉类</div>
-      <div class="stat-sub" style="color:var(--warning);">${total > 0 ? Math.round(complaint/total*100) : 0}%</div>
-    </div>
     <div class="stat-card stat-repair">
       <div class="stat-value" style="color:#7d3c98;">🔧 ${repair}</div>
       <div class="stat-label">维修类</div>
       <div class="stat-sub" style="color:#9b59b6;">${total > 0 ? Math.round(repair/total*100) : 0}%</div>
+    </div>
+    <div class="stat-card stat-consulting">
+      <div class="stat-value" style="color:#2c6fbe;">📋 ${non_repair}</div>
+      <div class="stat-label">非维修类</div>
+      <div class="stat-sub" style="color:#5b8dd9;">${total > 0 ? Math.round(non_repair/total*100) : 0}%</div>
     </div>
     <div class="stat-card stat-pending">
       <div class="stat-value" style="color:${overdue > 0 ? 'var(--danger)' : 'var(--text)'};">${pending}</div>
@@ -256,6 +263,7 @@ function renderTable() {
 
   document.getElementById('woTableBody').innerHTML = orders.map((o, idx) => {
     const cat = WORK_ORDER_CATEGORIES[o.category];
+    const sub = o.subCategory ? WORK_ORDER_SUBCATEGORIES[o.subCategory] : null;
     const attitudeClass = o.attitude === '态度恶劣' ? 'bool-no' : 'bool-yes';
     return `<tr>
       <td style="color:var(--text-light);font-size:12px;">${idx + 1}</td>
@@ -264,6 +272,7 @@ function renderTable() {
         <div style="font-size:11px;color:var(--text-light);">${projectMap[o.projectId] || o.projectId}</div>
       </td>
       <td><span class="category-tag tag-${o.category}">${cat.icon} ${cat.label}</span></td>
+      <td>${sub ? `<span class="category-tag" style="background:#f0f0f0;color:#555;">${sub.icon} ${sub.label}</span>` : '<span class="bool-na">—</span>'}</td>
       <td class="${attitudeClass}">${o.attitude}</td>
       <td class="${o.valid ? 'bool-yes' : 'bool-no'}">${o.valid ? '是（生成工单）' : '否'}</td>
       <td>${o.handler}</td>
