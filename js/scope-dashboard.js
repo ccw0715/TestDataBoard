@@ -389,19 +389,44 @@ function renderScopeAnalysis() {
     (failCount > 0 ? `<span style="color:var(--danger);"> 其中 ${failCount} 个项目不及格，需重点关注。</span>` : '') +
     (redlineCount > 0 ? `<span style="color:var(--danger);"> ${redlineCount} 个项目触发红线项。</span>` : '');
 
-  // 各模块分析块：与单项目格式一致，展示均分+等级+各项目得分列表
+  // 各模块分析块：聚合所有项目的 moduleIssueDetails，格式与单项目一致
+  function aggregateModuleDetails(key) {
+    const subCatMap = {};
+    projects.forEach(p => {
+      ((p.moduleIssueDetails || {})[key] || []).forEach(d => {
+        if (!subCatMap[d.subCategory]) subCatMap[d.subCategory] = [];
+        subCatMap[d.subCategory].push(...d.items);
+      });
+    });
+    return Object.entries(subCatMap).map(([subCategory, items]) => ({ subCategory, items }));
+  }
+
   const moduleBlocks = keys.map(k => {
     const score = moduleAvg[k];
     const grade = getGrade(score);
     const label = MODULE_LABELS[k];
     const borderColor = score >= 93 ? 'var(--success)' : score >= 88 ? 'var(--info)' : score >= 83 ? 'var(--warning)' : 'var(--danger)';
 
-    const goodProjects = projects.filter(p => p.scores[k] >= 88);
-    const badProjects  = projects.filter(p => p.scores[k] < 88);
-    const listHtml = `<div style="margin-top:8px;">
-      ${goodProjects.map(p => `<div style="font-size:12px;color:var(--success);margin-bottom:3px;">✓ ${p.name}（${p.scores[k]}）</div>`).join('')}
-      ${badProjects.map(p => `<div style="font-size:12px;color:var(--danger);margin-bottom:3px;">✗ ${p.name}（${p.scores[k]}）</div>`).join('')}
-    </div>`;
+    const aggDetails = aggregateModuleDetails(k);
+    const showGrid = k !== 'green' && k !== 'service';
+
+    let issueHtml;
+    if (aggDetails.length > 0) {
+      const subCatSummary = aggDetails.map(d => `${d.subCategory}（${d.items.length}）`).join('、');
+      if (showGrid) {
+        const gridPoints = aggDetails.flatMap(d => d.items).map(item => `${item.location}（${item.deduction}）`).join('&nbsp;&nbsp;');
+        issueHtml = `<div style="margin-top:8px;">
+          <div style="font-size:12px;color:var(--text);margin-bottom:4px;">${subCatSummary}</div>
+          <div style="font-size:12px;color:var(--text-light);">网格点：${gridPoints}</div>
+        </div>`;
+      } else {
+        issueHtml = `<div style="margin-top:8px;">
+          <div style="font-size:12px;color:var(--text);margin-bottom:4px;">${subCatSummary}</div>
+        </div>`;
+      }
+    } else {
+      issueHtml = `<p style="color:var(--success);font-size:12px;margin-top:6px;">✓ 本期未发现问题</p>`;
+    }
 
     return `<div class="analysis-block" style="border-left-color:${borderColor};">
       <div class="analysis-title" style="display:flex;align-items:center;gap:8px;">
@@ -409,7 +434,7 @@ function renderScopeAnalysis() {
         <span style="font-size:22px;font-weight:700;color:${borderColor};">${score}</span>
         <span class="grade-badge ${grade.className}" style="font-size:11px;">${grade.label}</span>
       </div>
-      ${listHtml}
+      ${issueHtml}
     </div>`;
   }).join('');
 
