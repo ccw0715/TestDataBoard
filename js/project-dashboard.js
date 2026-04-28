@@ -275,12 +275,18 @@ function renderAnalysis() {
     let issueHtml;
     if (moduleDetails.length > 0) {
       const subCatSummary = moduleDetails.map(d => `${d.subCategory}（${d.items.length}）`).join('、');
-      const allItems = moduleDetails.flatMap(d => d.items);
-      const gridPoints = allItems.map(item => `${item.location}（${item.deduction}）`).join('&nbsp;&nbsp;');
-      issueHtml = `<div style="margin-top:8px;">
-        <div style="font-size:12px;color:var(--text);margin-bottom:4px;">${subCatSummary}</div>
-        <div style="font-size:12px;color:var(--text-light);">网格点：${gridPoints}</div>
-      </div>`;
+      const showGrid = k !== 'green' && k !== 'service';
+      if (showGrid) {
+        const gridPoints = moduleDetails.flatMap(d => d.items).map(item => `${item.location}（${item.deduction}）`).join('&nbsp;&nbsp;');
+        issueHtml = `<div style="margin-top:8px;">
+          <div style="font-size:12px;color:var(--text);margin-bottom:4px;">${subCatSummary}</div>
+          <div style="font-size:12px;color:var(--text-light);">网格点：${gridPoints}</div>
+        </div>`;
+      } else {
+        issueHtml = `<div style="margin-top:8px;">
+          <div style="font-size:12px;color:var(--text);margin-bottom:4px;">${subCatSummary}</div>
+        </div>`;
+      }
     } else {
       issueHtml = `<p style="color:var(--success);font-size:12px;margin-top:6px;">✓ 本期未发现问题</p>`;
     }
