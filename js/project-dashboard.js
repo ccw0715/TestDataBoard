@@ -324,7 +324,7 @@ function renderSuggestion() {
 
   document.getElementById('suggestionContent').innerHTML = `
     <div class="analysis-block">
-      <div class="analysis-title">整改建议</div>
+      <div class="analysis-title">整改要求</div>
       <ul style="list-style:none;">${items}</ul>
     </div>
     <div class="analysis-block" style="border-left-color:var(--info);">
