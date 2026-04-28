@@ -226,14 +226,14 @@ RAW_PROJECTS.forEach(p => {
 // 持久化（localStorage）
 function loadProjects() {
   try {
-    const stored = localStorage.getItem('tdb_projects');
+    const stored = localStorage.getItem('tdb_projects_v2');
     if (stored) return JSON.parse(stored);
   } catch(e) {}
   return JSON.parse(JSON.stringify(RAW_PROJECTS));
 }
 
 function saveProjects(projects) {
-  localStorage.setItem('tdb_projects', JSON.stringify(projects));
+  localStorage.setItem('tdb_projects_v2', JSON.stringify(projects));
 }
 
 function getProjects() { return loadProjects(); }
