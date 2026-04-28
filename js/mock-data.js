@@ -19,6 +19,7 @@ const RAW_PROJECTS = [
   {
     id: 'P001',
     name: '时代天韵（黄埔）',
+    vendor: '广州万洁升环保工程有限公司',
     city: '广州',
     region: '广州公司',
     level: '紫金花',
@@ -65,6 +66,7 @@ const RAW_PROJECTS = [
   {
     id: 'P002',
     name: '清远远天世纪城',
+    vendor: '广州万洁升环保工程有限公司',
     city: '清远',
     region: '佛清肇公司',
     level: '金百合',
@@ -107,6 +109,7 @@ const RAW_PROJECTS = [
   {
     id: 'P003',
     name: '佛山金百合广场',
+    vendor: '广州万洁升环保工程有限公司',
     city: '佛山',
     region: '佛清肇公司',
     level: '金百合',
@@ -138,6 +141,7 @@ const RAW_PROJECTS = [
   {
     id: 'P004',
     name: '广州紫金花园',
+    vendor: '广州万洁升环保工程有限公司',
     city: '广州',
     region: '广州公司',
     level: '紫金花',
@@ -170,6 +174,7 @@ const RAW_PROJECTS = [
   {
     id: 'P005',
     name: '广州向日葵花苑',
+    vendor: '广州万洁升环保工程有限公司',
     city: '广州',
     region: '广州公司',
     level: '向日葵',

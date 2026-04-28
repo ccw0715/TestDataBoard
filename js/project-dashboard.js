@@ -36,6 +36,7 @@ function renderInfo() {
     <div class="info-item"><div class="info-label">项目等级</div><div class="info-value">${p.level}</div></div>
     <div class="info-item"><div class="info-label">管理费单价</div><div class="info-value">${p.unitPrice} 元/㎡</div></div>
     <div class="info-item"><div class="info-label">面积</div><div class="info-value">${p.area.toLocaleString()} ㎡</div></div>
+    <div class="info-item"><div class="info-label">供应商</div><div class="info-value">${p.vendor || '—'}</div></div>
     <div class="info-item"><div class="info-label">检查人员</div><div class="info-value">${p.inspector}</div></div>
     <div class="info-item"><div class="info-label">检查时间</div><div class="info-value">${p.inspectTime}</div></div>
   `;
