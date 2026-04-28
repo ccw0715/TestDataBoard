@@ -9,7 +9,7 @@
   <style>
     .stat-cards {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 12px;
       margin-bottom: 16px;
     }
@@ -57,8 +57,10 @@
       white-space: nowrap;
     }
 
-    .tag-repair     { background: #f3e8fb; color: #7d3c98; }
-    .tag-non_repair { background: #e8f0fb; color: #2c6fbe; }
+    .tag-repair   { background: #f3e8fb; color: #7d3c98; }
+    .tag-service  { background: #e8f0fb; color: #2c6fbe; }
+    .tag-env      { background: #fef9e7; color: #b7950b; }
+    .tag-green    { background: #e8f6f3; color: #148f77; }
 
     .bool-yes { color: var(--success); font-weight: 600; }
     .bool-no  { color: var(--danger);  font-weight: 600; }
@@ -101,7 +103,7 @@
       color: #fff;
     }
 
-    @media (max-width: 1100px) {
+    @media (max-width: 1200px) {
       .stat-cards { grid-template-columns: repeat(3, 1fr); }
       .charts-grid-3 { grid-template-columns: 1fr 1fr; }
     }
@@ -152,7 +154,9 @@
           <select id="categorySel" onchange="applyFilters()">
             <option value="">全部</option>
             <option value="repair">维修类</option>
-            <option value="non_repair">非维修类</option>
+            <option value="service">服务类</option>
+            <option value="env">环境类</option>
+            <option value="green">绿化类</option>
           </select>
         </div>
         <div class="filter-group">
@@ -198,7 +202,18 @@
         </div>
       </div>
       <div class="card">
-        <div class="card-title">各项目工单量</div>
+        <div class="card-title" style="display:flex;align-items:center;">
+          区域公司工单量对比
+          <select id="regionChartSel" onchange="onRegionChartChange()" style="margin-left:auto;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text);background:#fff;">
+            <option value="category">问题分类</option>
+            <option value="attitude">服务态度</option>
+            <option value="valid">是否有效</option>
+            <option value="completed">是否完成</option>
+            <option value="handleTime">处理时长(h)</option>
+            <option value="overdue">是否超时</option>
+            <option value="satisfied">是否满意</option>
+          </select>
+        </div>
         <div class="chart-container" style="height:220px;">
           <canvas id="projectBarChart"></canvas>
         </div>
@@ -234,7 +249,7 @@
     </div>
   </div>
 
-  <script src="js/mock-data.js"></script>
-  <script src="js/workorder-dashboard.js"></script>
+  <script src="js/mock-data.js?v=8"></script>
+  <script src="js/workorder-dashboard.js?v=8"></script>
 </body>
 </html>

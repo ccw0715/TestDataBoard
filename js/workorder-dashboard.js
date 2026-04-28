@@ -6,6 +6,7 @@ let statusBarChart = null;
 let filteredOrders = [];
 let sortKey = 'id';
 let sortAsc = true;
+let currentRegionChart = 'category';
 
 function init() {
   const regionSel = document.getElementById('regionSel');
@@ -78,7 +79,7 @@ function resetFilters() {
 function renderAll(projects) {
   renderStatCards();
   renderPieChart();
-  renderProjectBarChart(projects);
+  renderProjectBarChart();
   renderStatusChart();
   renderTable();
 }
@@ -86,8 +87,10 @@ function renderAll(projects) {
 function renderStatCards() {
   const orders = filteredOrders;
   const total = orders.length;
-  const repair = orders.filter(o => o.category === 'repair').length;
-  const non_repair = orders.filter(o => o.category === 'non_repair').length;
+  const repair  = orders.filter(o => o.category === 'repair').length;
+  const service = orders.filter(o => o.category === 'service').length;
+  const env     = orders.filter(o => o.category === 'env').length;
+  const green   = orders.filter(o => o.category === 'green').length;
   const pending = orders.filter(o => !o.completed).length;
   const overdue = orders.filter(o => o.overdue).length;
   const satisfied = orders.filter(o => o.satisfied === true).length;
@@ -108,9 +111,19 @@ function renderStatCards() {
       <div class="stat-sub" style="color:#9b59b6;">${total > 0 ? Math.round(repair/total*100) : 0}%</div>
     </div>
     <div class="stat-card stat-consulting">
-      <div class="stat-value" style="color:#2c6fbe;">📋 ${non_repair}</div>
-      <div class="stat-label">非维修类</div>
-      <div class="stat-sub" style="color:#5b8dd9;">${total > 0 ? Math.round(non_repair/total*100) : 0}%</div>
+      <div class="stat-value" style="color:#2c6fbe;">💬 ${service}</div>
+      <div class="stat-label">服务类</div>
+      <div class="stat-sub" style="color:#5b8dd9;">${total > 0 ? Math.round(service/total*100) : 0}%</div>
+    </div>
+    <div class="stat-card" style="border-top-color:#d4ac0d;">
+      <div class="stat-value" style="color:#b7950b;">🧹 ${env}</div>
+      <div class="stat-label">环境类</div>
+      <div class="stat-sub" style="color:#d4ac0d;">${total > 0 ? Math.round(env/total*100) : 0}%</div>
+    </div>
+    <div class="stat-card" style="border-top-color:#16a085;">
+      <div class="stat-value" style="color:#148f77;">🌿 ${green}</div>
+      <div class="stat-label">绿化类</div>
+      <div class="stat-sub" style="color:#16a085;">${total > 0 ? Math.round(green/total*100) : 0}%</div>
     </div>
     <div class="stat-card stat-pending">
       <div class="stat-value" style="color:${overdue > 0 ? 'var(--danger)' : 'var(--text)'};">${pending}</div>
@@ -152,28 +165,103 @@ function renderPieChart() {
   });
 }
 
-function renderProjectBarChart(projects) {
-  if (projBarChart) projBarChart.destroy();
-  if (!projects || projects.length === 0) return;
+function onRegionChartChange() {
+  currentRegionChart = document.getElementById('regionChartSel').value;
+  renderProjectBarChart();
+}
 
+function renderProjectBarChart() {
+  if (projBarChart) projBarChart.destroy();
   const orders = filteredOrders;
-  const labels = projects.map(p => p.name.length > 7 ? p.name.slice(0, 7) + '…' : p.name);
-  const repair = projects.map(p => orders.filter(o => o.projectId === p.id && o.category === 'repair').length);
-  const non_repair = projects.map(p => orders.filter(o => o.projectId === p.id && o.category === 'non_repair').length);
+  if (orders.length === 0) return;
+
+  const allProjects = getProjects();
+  const projectMap = {};
+  allProjects.forEach(p => { projectMap[p.id] = p; });
+
+  const regionSet = new Set();
+  orders.forEach(o => { const p = projectMap[o.projectId]; if (p) regionSet.add(p.region); });
+  const regions = [...regionSet];
+  if (regions.length === 0) return;
+
+  const byRegion = r => orders.filter(o => { const p = projectMap[o.projectId]; return p && p.region === r; });
+
+  let stacked = false;
+  let datasets = [];
+  let yAxis = { ticks: { stepSize: 1 } };
+
+  switch (currentRegionChart) {
+    case 'category': {
+      stacked = true;
+      datasets = Object.entries(WORK_ORDER_CATEGORIES).map(([k, v]) => ({
+        label: `${v.icon} ${v.label}`,
+        data: regions.map(r => byRegion(r).filter(o => o.category === k).length),
+        backgroundColor: v.color, borderRadius: 3,
+      }));
+      break;
+    }
+    case 'attitude': {
+      datasets = [
+        { label: '态度良好', data: regions.map(r => byRegion(r).filter(o => o.attitude !== '态度恶劣').length), backgroundColor: '#27ae60', borderRadius: 3 },
+        { label: '态度恶劣', data: regions.map(r => byRegion(r).filter(o => o.attitude === '态度恶劣').length), backgroundColor: '#c0392b', borderRadius: 3 },
+      ];
+      break;
+    }
+    case 'valid': {
+      datasets = [
+        { label: '有效', data: regions.map(r => byRegion(r).filter(o => o.valid === true).length), backgroundColor: '#27ae60', borderRadius: 3 },
+        { label: '无效', data: regions.map(r => byRegion(r).filter(o => o.valid === false).length), backgroundColor: '#95a5a6', borderRadius: 3 },
+      ];
+      break;
+    }
+    case 'completed': {
+      datasets = [
+        { label: '已完成', data: regions.map(r => byRegion(r).filter(o => o.completed === true).length), backgroundColor: '#27ae60', borderRadius: 3 },
+        { label: '处理中', data: regions.map(r => byRegion(r).filter(o => o.completed === false).length), backgroundColor: '#e67e22', borderRadius: 3 },
+      ];
+      break;
+    }
+    case 'handleTime': {
+      yAxis = { title: { display: true, text: '小时(h)' }, ticks: { stepSize: 1 } };
+      datasets = [{
+        label: '平均处理时长(h)',
+        data: regions.map(r => {
+          const done = byRegion(r).filter(o => o.handleTime !== null);
+          if (!done.length) return 0;
+          return Math.round(done.reduce((s, o) => s + o.handleTime, 0) / done.length * 10) / 10;
+        }),
+        backgroundColor: '#5b8dd9', borderRadius: 3,
+      }];
+      break;
+    }
+    case 'overdue': {
+      datasets = [
+        { label: '未超时', data: regions.map(r => byRegion(r).filter(o => !o.overdue).length), backgroundColor: '#27ae60', borderRadius: 3 },
+        { label: '超时', data: regions.map(r => byRegion(r).filter(o => o.overdue).length), backgroundColor: '#c0392b', borderRadius: 3 },
+      ];
+      break;
+    }
+    case 'satisfied': {
+      stacked = true;
+      datasets = [
+        { label: '满意', data: regions.map(r => byRegion(r).filter(o => o.satisfied === true).length), backgroundColor: '#27ae60', borderRadius: 3 },
+        { label: '不满意', data: regions.map(r => byRegion(r).filter(o => o.satisfied === false).length), backgroundColor: '#c0392b', borderRadius: 3 },
+        { label: '未评价', data: regions.map(r => byRegion(r).filter(o => o.satisfied === null).length), backgroundColor: '#bdc3c7', borderRadius: 3 },
+      ];
+      break;
+    }
+  }
 
   projBarChart = new Chart(document.getElementById('projectBarChart'), {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: '🔧 维修类', data: repair, backgroundColor: '#9b59b6', borderRadius: 3 },
-        { label: '📋 非维修类', data: non_repair, backgroundColor: '#5b8dd9', borderRadius: 3 },
-      ],
-    },
+    data: { labels: regions, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      scales: { x: { stacked: true }, y: { stacked: true, ticks: { stepSize: 1 } } },
+      scales: {
+        x: { stacked },
+        y: { ...yAxis, stacked },
+      },
       plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } },
     },
   });

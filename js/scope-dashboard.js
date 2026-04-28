@@ -5,6 +5,8 @@ let scopeRadarChart = null;
 let filteredProjects = [];
 let sortKey = 'total';
 let sortAsc = false;
+let currentCompareModule = 'total';
+let currentCompareTrend = 'yoy';
 
 function initFilters() {
   // Region
@@ -144,43 +146,159 @@ function scoreClass(v) {
   return 'score-low';
 }
 
+function dateToQuarter(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const q = Math.ceil((d.getMonth() + 1) / 3);
+  return `${d.getFullYear()}年Q${q}`;
+}
+
+function onCompareModuleChange() {
+  currentCompareModule = document.getElementById('compareModuleSel').value;
+  renderBarChart();
+}
+
+function onTrendChange(trend, btn) {
+  currentCompareTrend = trend;
+  document.querySelectorAll('.compare-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBarChart();
+}
+
+function getRegionAvgScore(projects, key, historyPeriod) {
+  if (projects.length === 0) return 0;
+  const moduleKeys = ['env', 'safety', 'facility', 'green', 'service'];
+  const scores = projects.map(p => {
+    if (!historyPeriod) {
+      return key === 'total' ? p.scores.total : p.scores[key];
+    }
+    const h = p.history[historyPeriod];
+    if (!h) return 0;
+    if (key === 'total') {
+      const vals = moduleKeys.map(k => h[k] || 0);
+      return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 100) / 100;
+    }
+    return h[key] || 0;
+  });
+  return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 100) / 100;
+}
+
 function renderBarChart() {
   const projects = filteredProjects;
   if (scopeBarChart) scopeBarChart.destroy();
   if (projects.length === 0) return;
 
-  const labels = projects.map(p => p.name.length > 8 ? p.name.slice(0, 8) + '…' : p.name);
-  const data = projects.map(p => p.scores.total);
-  const colors = data.map(v => v >= 93 ? '#27ae60' : v >= 83 ? '#e67e22' : '#c0392b');
+  const regions = [...new Set(projects.map(p => p.region))];
+  const moduleLabel = currentCompareModule === 'total' ? '总分' : MODULE_LABELS[currentCompareModule];
 
-  scopeBarChart = new Chart(document.getElementById('barChart'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: '总得分',
-        data,
-        backgroundColor: colors,
-        borderRadius: 4,
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: { min: 60, max: 100 },
+  function moduleScore(p, key, histSlot) {
+    const moduleKeys = ['env', 'safety', 'facility', 'green', 'service'];
+    if (histSlot === null) {
+      return key === 'total' ? p.scores.total : p.scores[key];
+    }
+    const h = p.history?.prevInspections?.[histSlot];
+    if (!h) return null;
+    if (key === 'total') {
+      const vals = moduleKeys.map(k => h[k] || 0);
+      return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 100) / 100;
+    }
+    return h[key] || 0;
+  }
+
+  function regionAvg(rProjects, key, histSlot) {
+    const scores = rProjects.map(p => moduleScore(p, key, histSlot)).filter(v => v !== null);
+    if (scores.length === 0) return null;
+    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 100) / 100;
+  }
+
+  if (currentCompareTrend === 'yoy') {
+    const currentData = regions.map(r => regionAvg(projects.filter(p => p.region === r), currentCompareModule, null));
+    const compareData = regions.map(r =>
+      getRegionAvgScore(projects.filter(p => p.region === r), currentCompareModule, 'lastYear')
+    );
+
+    scopeBarChart = new Chart(document.getElementById('barChart'), {
+      type: 'bar',
+      data: {
+        labels: regions,
+        datasets: [
+          { label: `本期（${moduleLabel}）`, data: currentData, backgroundColor: '#c0392b', borderRadius: 4 },
+          { label: '去年同期', data: compareData, backgroundColor: '#95a5a6', borderRadius: 4 },
+        ],
       },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: (items) => projects[items[0].dataIndex].name,
-            afterLabel: (item) => `等级：${getGrade(item.raw).label}`,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { min: 60, max: 100, ticks: { stepSize: 10 } } },
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              afterLabel: (ctx) => {
+                if (ctx.datasetIndex !== 0) return '';
+                const diff = currentData[ctx.dataIndex] - compareData[ctx.dataIndex];
+                return `较去年同期：${diff >= 0 ? '+' : ''}${diff.toFixed(2)}分`;
+              },
+            },
           },
         },
       },
-    },
-  });
+    });
+  } else {
+    // 环比：前3次检查（按季度）+ 本期，折线图，每条线代表一个区域
+    const sampleProject = projects[0];
+    const prevDates = (sampleProject?.history?.prevInspections || []).map(h => h.date);
+    const timeLabels = [
+      ...prevDates.map(d => dateToQuarter(d)),
+      `${dateToQuarter(sampleProject.inspectTime)}（本期）`,
+    ];
+
+    const regionColors = ['#c0392b', '#3498db', '#27ae60', '#e67e22'];
+
+    const datasets = regions.map((r, i) => {
+      const rProjects = projects.filter(p => p.region === r);
+      const data = [
+        regionAvg(rProjects, currentCompareModule, 0),
+        regionAvg(rProjects, currentCompareModule, 1),
+        regionAvg(rProjects, currentCompareModule, 2),
+        regionAvg(rProjects, currentCompareModule, null),
+      ];
+      const color = regionColors[i % regionColors.length];
+      return {
+        label: `${r}（${moduleLabel}）`,
+        data,
+        borderColor: color,
+        backgroundColor: 'transparent',
+        pointBackgroundColor: color,
+        borderWidth: 2,
+        pointRadius: 5,
+        tension: 0.3,
+      };
+    });
+
+    scopeBarChart = new Chart(document.getElementById('barChart'), {
+      type: 'line',
+      data: { labels: timeLabels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { min: 60, max: 100, ticks: { stepSize: 10 } } },
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              afterLabel: (ctx) => {
+                const ds = ctx.dataset.data;
+                const idx = ctx.dataIndex;
+                if (idx === 0 || ds[idx - 1] === null) return '';
+                const diff = ds[idx] - ds[idx - 1];
+                return `较上次：${diff >= 0 ? '+' : ''}${diff.toFixed(2)}分`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }
 }
 
 function renderRadarChart() {
@@ -259,46 +377,87 @@ function renderScopeAnalysis() {
     moduleAvg[k] = Math.round(projects.reduce((s, p) => s + p.scores[k], 0) / projects.length * 100) / 100;
   });
 
-  const goodModules = keys.filter(k => moduleAvg[k] >= 93).map(k => MODULE_LABELS[k]);
+  const goodModules = keys.filter(k => moduleAvg[k] >= 88).map(k => MODULE_LABELS[k]);
   const badModules = keys.filter(k => moduleAvg[k] < 88).map(k => MODULE_LABELS[k]);
   const failCount = projects.filter(p => p.scores.total < 83).length;
   const redlineCount = projects.filter(p => p.redLines && p.redLines.length > 0).length;
+  const totalGrade = getGrade(avgTotal);
+
+  const totalAnalysis = `当前范围共 <strong>${projects.length}</strong> 个项目，平均得分 <strong>${avgTotal}</strong> 分，得分等级：<strong>${totalGrade.label}</strong>。` +
+    (goodModules.length > 0 ? `良好及以上模块：${goodModules.join('、')}；` : '') +
+    (badModules.length > 0 ? `良好以下模块：${badModules.join('、')}。` : '各模块表现均衡。') +
+    (failCount > 0 ? `<span style="color:var(--danger);"> 其中 ${failCount} 个项目不及格，需重点关注。</span>` : '') +
+    (redlineCount > 0 ? `<span style="color:var(--danger);"> ${redlineCount} 个项目触发红线项。</span>` : '');
+
+  // 各模块分析块：与单项目格式一致，展示均分+等级+各项目得分列表
+  const moduleBlocks = keys.map(k => {
+    const score = moduleAvg[k];
+    const grade = getGrade(score);
+    const label = MODULE_LABELS[k];
+    const borderColor = score >= 93 ? 'var(--success)' : score >= 88 ? 'var(--info)' : score >= 83 ? 'var(--warning)' : 'var(--danger)';
+
+    const goodProjects = projects.filter(p => p.scores[k] >= 88);
+    const badProjects  = projects.filter(p => p.scores[k] < 88);
+    const listHtml = `<div style="margin-top:8px;">
+      ${goodProjects.map(p => `<div style="font-size:12px;color:var(--success);margin-bottom:3px;">✓ ${p.name}（${p.scores[k]}）</div>`).join('')}
+      ${badProjects.map(p => `<div style="font-size:12px;color:var(--danger);margin-bottom:3px;">✗ ${p.name}（${p.scores[k]}）</div>`).join('')}
+    </div>`;
+
+    return `<div class="analysis-block" style="border-left-color:${borderColor};">
+      <div class="analysis-title" style="display:flex;align-items:center;gap:8px;">
+        ${label}
+        <span style="font-size:22px;font-weight:700;color:${borderColor};">${score}</span>
+        <span class="grade-badge ${grade.className}" style="font-size:11px;">${grade.label}</span>
+      </div>
+      ${listHtml}
+    </div>`;
+  }).join('');
+
+  const aiAnalysis = `基于当前 ${projects.length} 个项目检查数据综合分析：整体品质水平${avgTotal >= 93 ? '优秀' : avgTotal >= 88 ? '良好' : avgTotal >= 83 ? '及格' : '有待提升'}，区域平均得分 ${avgTotal} 分。` +
+    (badModules.length > 0 ? `${badModules.join('、')}模块在多个项目中均呈现较低得分，建议从管理机制、人员培训等方面进行系统性改善。` : '各模块得分均处于较好水平，建议继续保持。') +
+    (redlineCount > 0 ? `有 ${redlineCount} 个项目触发红线项，需优先整改安全隐患。` : '');
 
   document.getElementById('scopeAnalysis').innerHTML = `
     <div class="analysis-block">
       <div class="analysis-title">总分分析</div>
-      <p>当前筛选范围共 <strong>${projects.length}</strong> 个项目，平均得分 <strong>${avgTotal}</strong> 分。
-        ${failCount > 0 ? `<span style="color:var(--danger);">其中 ${failCount} 个项目不及格，需重点关注。</span>` : '所有项目均达及格线以上。'}
-        ${redlineCount > 0 ? `<span style="color:var(--danger);"> ${redlineCount} 个项目触发红线项。</span>` : ''}
-      </p>
+      <p>${totalAnalysis}</p>
       <div class="module-tags" style="margin-top:10px;">
-        ${goodModules.map(m => `<span class="module-tag tag-good">✓ ${m}（优秀）</span>`).join('')}
-        ${badModules.map(m => `<span class="module-tag tag-bad">✗ ${m}（待提升）</span>`).join('')}
+        ${goodModules.map(m => `<span class="module-tag tag-good">✓ ${m}</span>`).join('')}
+        ${badModules.map(m => `<span class="module-tag tag-bad">✗ ${m}</span>`).join('')}
       </div>
     </div>
-    <div class="analysis-block">
-      <div class="analysis-title">模块分析</div>
-      <p>各模块平均得分：${keys.map(k => `${MODULE_LABELS[k]} ${moduleAvg[k]}`).join('、')}。
-        ${badModules.length > 0 ? `<strong>${badModules.join('、')}</strong>为整体薄弱环节，建议重点关注。` : '各模块表现均衡。'}
-      </p>
+    <div style="margin-bottom:4px;font-size:13px;font-weight:600;color:var(--text);">各模块分析</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      ${moduleBlocks}
     </div>
     <div class="analysis-block" style="border-left-color:var(--info);">
-      <div class="analysis-title">AI 综合分析</div>
-      <p>基于当前 ${projects.length} 个项目的检查数据综合分析：整体品质水平${avgTotal >= 93 ? '优秀' : avgTotal >= 88 ? '良好' : avgTotal >= 83 ? '及格' : '有待提升'}。
-        ${badModules.length > 0 ? `${badModules.join('、')}模块在多个项目中均呈现较低得分，建议从管理机制、人员培训等方面进行系统性改善。` : '各模块得分均处于较好水平，建议继续保持。'}
-      </p>
+      <div class="analysis-title">综合分析</div>
+      <p>${aiAnalysis}</p>
     </div>
   `;
 
+  // 提升建议：与单项目格式一致
+  const badKeys = keys.filter(k => moduleAvg[k] < 88);
+  const suggestionItems = badKeys.length > 0
+    ? badKeys.map((k, i) => `<li style="margin-bottom:8px;color:var(--text-light);">
+        <span style="font-weight:700;color:var(--primary);">${i + 1}.</span>
+        针对 <strong>${MODULE_LABELS[k]}</strong>（区域均分 ${moduleAvg[k]} 分），督促相关项目制定专项整改计划，明确责任人及完成时限
+      </li>`).join('')
+    : `<li style="color:var(--text-light);">当前所有模块均达到良好以上水平，继续保持。</li>`;
+
+  const aiSuggestion = (badModules.length > 0
+    ? badModules.map((m, i) => `${'①②③④⑤'[i]}针对${m}薄弱环节，参照区域内优秀项目管理标准，制定专项提升计划并设定考核节点`).join('；') + '。'
+    : '继续保持现有管理水平，将优秀经验向区域内其他项目输出推广。') +
+    '加强项目间横向交流，组织现场观摩学习；建立问题闭环管理机制，确保检查发现问题在规定时限内完成整改并验收。';
+
   document.getElementById('scopeSuggestion').innerHTML = `
+    <div class="analysis-block">
+      <div class="analysis-title">整改要求</div>
+      <ul style="list-style:none;">${suggestionItems}</ul>
+    </div>
     <div class="analysis-block" style="border-left-color:var(--info);">
-      <div class="analysis-title">AI 提升建议</div>
-      <p>基于同类型优秀项目数据对比，建议：</p>
-      <ol style="padding-left:20px;margin-top:8px;line-height:2;color:var(--text-light);">
-        ${badModules.length > 0 ? badModules.map(m => `<li>针对 <strong>${m}</strong> 薄弱环节，参照区域内优秀项目的管理标准，制定专项提升计划，设置明确的改进时限和考核节点</li>`).join('') : '<li>继续保持现有管理水平，将优秀经验向区域内其他项目输出推广</li>'}
-        <li>加强项目间横向交流，组织现场观摩学习活动，提升整体管理水平</li>
-        <li>建立问题闭环管理机制，确保检查发现问题在规定时限内完成整改并验收</li>
-      </ol>
+      <div class="analysis-title">提升建议</div>
+      <p style="color:var(--text-light);line-height:1.8;">${aiSuggestion}</p>
     </div>
   `;
 }

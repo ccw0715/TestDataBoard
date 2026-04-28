@@ -255,35 +255,36 @@ function renderAnalysis() {
   const p = currentProject;
   const s = p.scores;
   const keys = ['env', 'safety', 'facility', 'green', 'service'];
-  const goodModules = keys.filter(k => s[k] >= 93).map(k => MODULE_LABELS[k]);
+  const goodModules = keys.filter(k => s[k] >= 88).map(k => MODULE_LABELS[k]);
   const badModules = keys.filter(k => s[k] < 88).map(k => MODULE_LABELS[k]);
 
   const totalGrade = getGrade(s.total);
   const totalAnalysis = `本期总得分 ${s.total} 分，得分等级：<strong>${totalGrade.label}</strong>。` +
-    (goodModules.length > 0 ? `优秀以上模块：${goodModules.join('、')}；` : '') +
+    (goodModules.length > 0 ? `良好及以上模块：${goodModules.join('、')}；` : '') +
     (badModules.length > 0 ? `良好以下模块：${badModules.join('、')}。` : '各模块表现均衡。');
 
-  // 每个模块的相关问题（按模块名匹配）
-  const moduleIssueMap = {};
-  keys.forEach(k => { moduleIssueMap[k] = []; });
-  const moduleKeywords = { env: ['环境', '清洁', '卫生', '垃圾', '漂浮'], safety: ['安全', '消防', '燃', '电梯机房', '通道'], facility: ['设施', '设备', '电梯', '维修', '老化'], green: ['绿化', '植', '养护', '裸露'], service: ['服务', '员工', '着装', '应答'] };
-  (p.issues || []).forEach(issue => {
-    let assigned = false;
-    for (const [k, kws] of Object.entries(moduleKeywords)) {
-      if (kws.some(kw => issue.includes(kw))) { moduleIssueMap[k].push(issue); assigned = true; break; }
-    }
-    if (!assigned) moduleIssueMap['env'].push(issue);
-  });
+  const details = p.moduleIssueDetails || {};
 
   const moduleBlocks = keys.map(k => {
     const score = s[k];
     const grade = getGrade(score);
     const label = MODULE_LABELS[k];
-    const issues = moduleIssueMap[k];
+    const moduleDetails = details[k] || [];
     const borderColor = score >= 93 ? 'var(--success)' : score >= 88 ? 'var(--info)' : score >= 83 ? 'var(--warning)' : 'var(--danger)';
-    const issueHtml = issues.length > 0
-      ? `<ul style="list-style:none;margin-top:6px;">${issues.map(i => `<li style="color:var(--text-light);font-size:12px;margin-bottom:4px;">• ${i}</li>`).join('')}</ul>`
-      : `<p style="color:var(--success);font-size:12px;margin-top:6px;">✓ 本期未发现问题</p>`;
+
+    let issueHtml;
+    if (moduleDetails.length > 0) {
+      const subCatSummary = moduleDetails.map(d => `${d.subCategory}（${d.items.length}）`).join('、');
+      const allItems = moduleDetails.flatMap(d => d.items);
+      const gridPoints = allItems.map(item => `${item.location}（${item.deduction}）`).join('&nbsp;&nbsp;');
+      issueHtml = `<div style="margin-top:8px;">
+        <div style="font-size:12px;color:var(--text);margin-bottom:4px;">${subCatSummary}</div>
+        <div style="font-size:12px;color:var(--text-light);">网格点：${gridPoints}</div>
+      </div>`;
+    } else {
+      issueHtml = `<p style="color:var(--success);font-size:12px;margin-top:6px;">✓ 本期未发现问题</p>`;
+    }
+
     return `<div class="analysis-block" style="border-left-color:${borderColor};">
       <div class="analysis-title" style="display:flex;align-items:center;gap:8px;">
         ${label}
