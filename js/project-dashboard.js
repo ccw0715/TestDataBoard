@@ -274,8 +274,9 @@ function renderAnalysis() {
 
     let issueHtml;
     if (moduleDetails.length > 0) {
-      const subCatSummary = moduleDetails.map(d => `${d.subCategory}（${d.items.length}）`).join('、');
-      let gridItems = moduleDetails.flatMap(d => d.items);
+      const sortedDetails = [...moduleDetails].sort((a, b) => b.items.length - a.items.length);
+      const subCatSummary = sortedDetails.map(d => `${d.subCategory}（${d.items.length}）`).join('、');
+      let gridItems = sortedDetails.flatMap(d => d.items);
       if (k === 'green') {
         const merged = {};
         gridItems.forEach(item => {
@@ -284,6 +285,7 @@ function renderAnalysis() {
         });
         gridItems = Object.values(merged);
       }
+      gridItems = [...gridItems].sort((a, b) => b.deduction - a.deduction);
       const gridLabel = k === 'green' ? '问题点' : k === 'service' ? '岗位' : '网格点';
       const gridPoints = gridItems.map(item => `${item.location}（${item.deduction}）`).join('&nbsp;&nbsp;');
       issueHtml = `<div style="margin-top:8px;">

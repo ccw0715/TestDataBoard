@@ -412,9 +412,12 @@ function renderScopeAnalysis() {
 
     let issueHtml;
     if (aggDetails.length > 0) {
-      const subCatSummary = aggDetails.map(d => `${d.subCategory}（${d.items.length}）`).join('、');
+      const sortedDetails = [...aggDetails].sort((a, b) => b.items.length - a.items.length);
+      const subCatSummary = sortedDetails.map(d => `${d.subCategory}（${d.items.length}）`).join('、');
       if (showGrid) {
-        const gridPoints = aggDetails.flatMap(d => d.items).map(item => `${item.location}（${item.deduction}）`).join('&nbsp;&nbsp;');
+        const gridPoints = sortedDetails.flatMap(d => d.items)
+          .slice().sort((a, b) => b.deduction - a.deduction)
+          .map(item => `${item.location}（${item.deduction}）`).join('&nbsp;&nbsp;');
         issueHtml = `<div style="margin-top:8px;">
           <div style="font-size:12px;color:var(--text);margin-bottom:4px;">${subCatSummary}</div>
           <div style="font-size:12px;color:var(--text-light);">网格点：${gridPoints}</div>
