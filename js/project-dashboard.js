@@ -275,18 +275,21 @@ function renderAnalysis() {
     let issueHtml;
     if (moduleDetails.length > 0) {
       const subCatSummary = moduleDetails.map(d => `${d.subCategory}（${d.items.length}）`).join('、');
-      const showGrid = k !== 'green' && k !== 'service';
-      if (showGrid) {
-        const gridPoints = moduleDetails.flatMap(d => d.items).map(item => `${item.location}（${item.deduction}）`).join('&nbsp;&nbsp;');
-        issueHtml = `<div style="margin-top:8px;">
-          <div style="font-size:12px;color:var(--text);margin-bottom:4px;">${subCatSummary}</div>
-          <div style="font-size:12px;color:var(--text-light);">网格点：${gridPoints}</div>
-        </div>`;
-      } else {
-        issueHtml = `<div style="margin-top:8px;">
-          <div style="font-size:12px;color:var(--text);margin-bottom:4px;">${subCatSummary}</div>
-        </div>`;
+      let gridItems = moduleDetails.flatMap(d => d.items);
+      if (k === 'green') {
+        const merged = {};
+        gridItems.forEach(item => {
+          if (merged[item.location]) merged[item.location].deduction += item.deduction;
+          else merged[item.location] = { ...item };
+        });
+        gridItems = Object.values(merged);
       }
+      const gridLabel = k === 'green' ? '问题点' : k === 'service' ? '岗位' : '网格点';
+      const gridPoints = gridItems.map(item => `${item.location}（${item.deduction}）`).join('&nbsp;&nbsp;');
+      issueHtml = `<div style="margin-top:8px;">
+        <div style="font-size:12px;color:var(--text);margin-bottom:4px;">${subCatSummary}</div>
+        <div style="font-size:12px;color:var(--text-light);">${gridLabel}：${gridPoints}</div>
+      </div>`;
     } else {
       issueHtml = `<p style="color:var(--success);font-size:12px;margin-top:6px;">✓ 本期未发现问题</p>`;
     }

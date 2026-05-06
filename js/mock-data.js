@@ -50,24 +50,24 @@ const RAW_PROJECTS = [
     ],
     moduleIssueDetails: {
       env: [
-        { subCategory: '垃圾清运', items: [{ location: 'A1栋大堂', deduction: 5 }, { location: 'A3垃圾投放点', deduction: 3 }, { location: '负一停车场', deduction: 2 }] },
-        { subCategory: '公区保洁', items: [{ location: '园区主干道', deduction: 3 }, { location: 'B区架空层', deduction: 2 }] },
+        { subCategory: '垃圾投放点卫生', items: [{ location: 'A1栋大堂', deduction: 2 }, { location: '垃圾投放点', deduction: 3 }, { location: '负一停车场', deduction: 2 }] },
+        { subCategory: '架空层保洁', items: [{ location: '园区主干道', deduction: 3 }, { location: 'B区架空层', deduction: 2 }, { location: 'A栋架空层', deduction: 2 }] },
       ],
       safety: [
-        { subCategory: '消防管理', items: [{ location: '3号楼地下室', deduction: 8 }, { location: 'A栋天面', deduction: 3 }] },
-        { subCategory: '门禁管理', items: [{ location: '小区外围', deduction: 3 }, { location: '园区', deduction: 2 }] },
+        { subCategory: '消防设施巡检', items: [{ location: '3号楼地下室', deduction: 1 }, { location: 'A栋天面', deduction: 3 }] },
+        { subCategory: '门禁设施使用', items: [{ location: '小区外围', deduction: 3 }, { location: '园区', deduction: 2 }] },
       ],
       facility: [
-        { subCategory: '机电设备', items: [{ location: '电梯机房', deduction: 5 }, { location: '设备用房', deduction: 3 }] },
-        { subCategory: '公共照明', items: [{ location: 'B区走廊', deduction: 2 }] },
+        { subCategory: '楼栋照明', items: [{ location: '电梯机房', deduction: 1 }, { location: '设备用房', deduction: 3 }] },
+        { subCategory: '消防指示灯', items: [{ location: 'B区走廊', deduction: 2 }] },
       ],
       green: [
-        { subCategory: '绿化养护', items: [{ location: '中心花园', deduction: 8 }, { location: 'A区入口', deduction: 5 }, { location: '架空层绿化', deduction: 4 }] },
-        { subCategory: '植被修剪', items: [{ location: '主干道两侧', deduction: 4 }, { location: 'B区花坛', deduction: 3 }] },
+        { subCategory: '草坪维护', items: [{ location: '养护问题', deduction: 1 }] },
+        { subCategory: '绿植修剪', items: [{ location: '养护问题', deduction: 1 }] },
       ],
       service: [
-        { subCategory: '员工形象', items: [{ location: '大堂岗位', deduction: 3 }, { location: '巡逻岗', deduction: 2 }] },
-        { subCategory: '应答规范', items: [{ location: '服务中心', deduction: 3 }] },
+        { subCategory: '员工形象', items: [{ location: '管家', deduction: 2 }] },
+        { subCategory: '应答规范', items: [{ location: '门岗', deduction: 3 }] },
       ],
     },
     suggestions: [
@@ -296,14 +296,14 @@ RAW_PROJECTS.forEach(p => {
 // 持久化（localStorage）
 function loadProjects() {
   try {
-    const stored = localStorage.getItem('tdb_projects_v3');
+    const stored = localStorage.getItem('tdb_projects_v4');
     if (stored) return JSON.parse(stored);
   } catch(e) {}
   return JSON.parse(JSON.stringify(RAW_PROJECTS));
 }
 
 function saveProjects(projects) {
-  localStorage.setItem('tdb_projects_v3', JSON.stringify(projects));
+  localStorage.setItem('tdb_projects_v4', JSON.stringify(projects));
 }
 
 function getProjects() { return loadProjects(); }
@@ -506,38 +506,38 @@ const WORK_ORDER_CATEGORIES = {
 };
 
 const RAW_WORK_ORDERS = [
-  { id: 'WO001', projectId: 'P001', issue: '电梯故障，无法正常运行', category: 'repair', attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-03', handleTime: 4.5, overdue: false, satisfied: true },
-  { id: 'WO002', projectId: 'P001', issue: '停车费用收取标准疑问', category: 'service', attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-02', handleTime: 1.2, overdue: false, satisfied: true },
-  { id: 'WO003', projectId: 'P001', issue: '保洁人员态度恶劣，言语冲突', category: 'service', attitude: '态度恶劣', valid: true, handler: '陈主管', completed: true, deadline: '2025-08-02', handleTime: 8.0, overdue: true, satisfied: false },
-  { id: 'WO004', projectId: 'P001', issue: '公共区域灯光损坏未修复', category: 'repair', attitude: '态度良好', valid: true, handler: '张技师', completed: false, deadline: '2025-08-05', handleTime: null, overdue: false, satisfied: null },
-  { id: 'WO005', projectId: 'P001', issue: '小区绿化养护问题反映', category: 'green', attitude: '态度良好', valid: false, handler: '王客服', completed: true, deadline: '2025-08-04', handleTime: 2.0, overdue: false, satisfied: true },
-  { id: 'WO006', projectId: 'P002', issue: '水管漏水，墙面渗水', category: 'repair', attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-03', handleTime: 6.0, overdue: false, satisfied: true },
-  { id: 'WO007', projectId: 'P002', issue: '物业费计算规则咨询', category: 'service', attitude: '态度良好', valid: true, handler: '陈客服', completed: true, deadline: '2025-08-02', handleTime: 0.8, overdue: false, satisfied: true },
-  { id: 'WO008', projectId: 'P002', issue: '安保人员不文明执勤投诉', category: 'service', attitude: '态度恶劣', valid: true, handler: '刘主管', completed: false, deadline: '2025-08-04', handleTime: null, overdue: true, satisfied: null },
-  { id: 'WO009', projectId: 'P002', issue: '健身设施损坏报修', category: 'repair', attitude: '态度良好', valid: true, handler: '张技师', completed: true, deadline: '2025-08-05', handleTime: 12.0, overdue: true, satisfied: false },
-  { id: 'WO010', projectId: 'P003', issue: '消防设施检查询问', category: 'service', attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-02', handleTime: 1.5, overdue: false, satisfied: true },
-  { id: 'WO011', projectId: 'P003', issue: '停车位划分不合理投诉', category: 'service', attitude: '态度良好', valid: true, handler: '陈主管', completed: true, deadline: '2025-08-03', handleTime: 5.0, overdue: false, satisfied: true },
-  { id: 'WO012', projectId: 'P003', issue: '门禁系统故障', category: 'repair', attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-02', handleTime: 3.0, overdue: false, satisfied: true },
-  { id: 'WO013', projectId: 'P004', issue: '装修管理规定咨询', category: 'service', attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-01', handleTime: 0.5, overdue: false, satisfied: true },
-  { id: 'WO014', projectId: 'P004', issue: '楼上噪音扰民投诉', category: 'service', attitude: '态度良好', valid: true, handler: '刘主管', completed: true, deadline: '2025-08-03', handleTime: 4.0, overdue: false, satisfied: true },
-  { id: 'WO015', projectId: 'P004', issue: '路灯损坏报修', category: 'repair', attitude: '态度良好', valid: true, handler: '张技师', completed: true, deadline: '2025-08-02', handleTime: 2.5, overdue: false, satisfied: true },
-  { id: 'WO016', projectId: 'P005', issue: '车辆被贴条咨询', category: 'service', attitude: '态度恶劣', valid: false, handler: '陈客服', completed: true, deadline: '2025-08-03', handleTime: 1.0, overdue: false, satisfied: false },
-  { id: 'WO017', projectId: 'P005', issue: '消防通道被占用投诉（业主反映）', category: 'env', attitude: '态度良好', valid: true, handler: '刘主管', completed: false, deadline: '2025-08-04', handleTime: null, overdue: true, satisfied: null },
-  { id: 'WO018', projectId: 'P005', issue: '单元门锁损坏报修', category: 'repair', attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-03', handleTime: 3.5, overdue: false, satisfied: true },
-  { id: 'WO019', projectId: 'P005', issue: '绿化破坏赔偿标准咨询', category: 'green', attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-04', handleTime: 2.0, overdue: false, satisfied: true },
-  { id: 'WO020', projectId: 'P002', issue: '地下停车场排水堵塞', category: 'env', attitude: '态度良好', valid: true, handler: '李技师', completed: false, deadline: '2025-08-05', handleTime: null, overdue: false, satisfied: null },
+  { id: 'WO001', projectId: 'P001', issue: '电梯故障，无法正常运行', category: 'repair', responseTime: 3, attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-03', handleTime: 4.5, overdue: false, satisfied: true },
+  { id: 'WO002', projectId: 'P001', issue: '停车费用收取标准疑问', category: 'service', responseTime: 2, attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-02', handleTime: 1.2, overdue: false, satisfied: true },
+  { id: 'WO003', projectId: 'P001', issue: '保洁人员态度恶劣，言语冲突', category: 'service', responseTime: 5, attitude: '态度恶劣', valid: true, handler: '陈主管', completed: true, deadline: '2025-08-02', handleTime: 8.0, overdue: true, satisfied: false },
+  { id: 'WO004', projectId: 'P001', issue: '公共区域灯光损坏未修复', category: 'repair', responseTime: 4, attitude: '态度良好', valid: true, handler: '张技师', completed: false, deadline: '2025-08-05', handleTime: null, overdue: false, satisfied: null },
+  { id: 'WO005', projectId: 'P001', issue: '小区绿化养护问题反映', category: 'green', responseTime: 3, attitude: '态度良好', valid: false, handler: '王客服', completed: true, deadline: '2025-08-04', handleTime: 2.0, overdue: false, satisfied: true },
+  { id: 'WO006', projectId: 'P002', issue: '水管漏水，墙面渗水', category: 'repair', responseTime: 8, attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-03', handleTime: 6.0, overdue: false, satisfied: true },
+  { id: 'WO007', projectId: 'P002', issue: '物业费计算规则咨询', category: 'service', responseTime: 1, attitude: '态度良好', valid: true, handler: '陈客服', completed: true, deadline: '2025-08-02', handleTime: 0.8, overdue: false, satisfied: true },
+  { id: 'WO008', projectId: 'P002', issue: '安保人员不文明执勤投诉', category: 'service', responseTime: 11, attitude: '态度恶劣', valid: true, handler: '刘主管', completed: false, deadline: '2025-08-04', handleTime: null, overdue: true, satisfied: null },
+  { id: 'WO009', projectId: 'P002', issue: '健身设施损坏报修', category: 'repair', responseTime: 6, attitude: '态度良好', valid: true, handler: '张技师', completed: true, deadline: '2025-08-05', handleTime: 12.0, overdue: true, satisfied: false },
+  { id: 'WO010', projectId: 'P003', issue: '消防设施检查询问', category: 'service', responseTime: 2, attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-02', handleTime: 1.5, overdue: false, satisfied: true },
+  { id: 'WO011', projectId: 'P003', issue: '停车位划分不合理投诉', category: 'service', responseTime: 4, attitude: '态度良好', valid: true, handler: '陈主管', completed: true, deadline: '2025-08-03', handleTime: 5.0, overdue: false, satisfied: true },
+  { id: 'WO012', projectId: 'P003', issue: '门禁系统故障', category: 'repair', responseTime: 5, attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-02', handleTime: 3.0, overdue: false, satisfied: true },
+  { id: 'WO013', projectId: 'P004', issue: '装修管理规定咨询', category: 'service', responseTime: 1, attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-01', handleTime: 0.5, overdue: false, satisfied: true },
+  { id: 'WO014', projectId: 'P004', issue: '楼上噪音扰民投诉', category: 'service', responseTime: 7, attitude: '态度良好', valid: true, handler: '刘主管', completed: true, deadline: '2025-08-03', handleTime: 4.0, overdue: false, satisfied: true },
+  { id: 'WO015', projectId: 'P004', issue: '路灯损坏报修', category: 'repair', responseTime: 3, attitude: '态度良好', valid: true, handler: '张技师', completed: true, deadline: '2025-08-02', handleTime: 2.5, overdue: false, satisfied: true },
+  { id: 'WO016', projectId: 'P005', issue: '车辆被贴条咨询', category: 'service', responseTime: 2, attitude: '态度恶劣', valid: false, handler: '陈客服', completed: true, deadline: '2025-08-03', handleTime: 1.0, overdue: false, satisfied: false },
+  { id: 'WO017', projectId: 'P005', issue: '消防通道被占用投诉（业主反映）', category: 'env', responseTime: 12, attitude: '态度良好', valid: true, handler: '刘主管', completed: false, deadline: '2025-08-04', handleTime: null, overdue: true, satisfied: null },
+  { id: 'WO018', projectId: 'P005', issue: '单元门锁损坏报修', category: 'repair', responseTime: 4, attitude: '态度良好', valid: true, handler: '李技师', completed: true, deadline: '2025-08-03', handleTime: 3.5, overdue: false, satisfied: true },
+  { id: 'WO019', projectId: 'P005', issue: '绿化破坏赔偿标准咨询', category: 'green', responseTime: 3, attitude: '态度良好', valid: true, handler: '王客服', completed: true, deadline: '2025-08-04', handleTime: 2.0, overdue: false, satisfied: true },
+  { id: 'WO020', projectId: 'P002', issue: '地下停车场排水堵塞', category: 'env', responseTime: 9, attitude: '态度良好', valid: true, handler: '李技师', completed: false, deadline: '2025-08-05', handleTime: null, overdue: false, satisfied: null },
 ];
 
 function getWorkOrders() {
   try {
-    const stored = localStorage.getItem('tdb_workorders_v3');
+    const stored = localStorage.getItem('tdb_workorders_v4');
     if (stored) return JSON.parse(stored);
   } catch(e) {}
   return JSON.parse(JSON.stringify(RAW_WORK_ORDERS));
 }
 
 function saveWorkOrders(list) {
-  localStorage.setItem('tdb_workorders_v3', JSON.stringify(list));
+  localStorage.setItem('tdb_workorders_v4', JSON.stringify(list));
 }
 
 const RULE_CATEGORIES = [

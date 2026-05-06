@@ -337,6 +337,9 @@ function renderTable() {
   document.getElementById('woTableBody').innerHTML = orders.map((o, idx) => {
     const cat = WORK_ORDER_CATEGORIES[o.category];
     const attitudeClass = o.attitude === '态度恶劣' ? 'bool-no' : 'bool-yes';
+    const respStyle = o.responseTime > 10 ? 'style="color:var(--danger);font-weight:600;"' : '';
+    const dash = '<span class="bool-na">—</span>';
+    const isInvalid = o.valid === false;
     return `<tr>
       <td style="color:var(--text-light);font-size:12px;">${idx + 1}</td>
       <td style="max-width:240px;">
@@ -344,15 +347,16 @@ function renderTable() {
         <div style="font-size:11px;color:var(--text-light);">${projectMap[o.projectId] || o.projectId}</div>
       </td>
       <td><span class="category-tag tag-${o.category}">${cat.icon} ${cat.label}</span></td>
+      <td ${respStyle}>${o.responseTime}</td>
       <td class="${attitudeClass}">${o.attitude}</td>
       <td class="${o.valid ? 'bool-yes' : 'bool-no'}">${o.valid ? '是（生成工单）' : '否'}</td>
-      <td>${o.handler}</td>
-      <td class="${o.completed ? 'completed-yes' : 'completed-no'}">${o.completed ? '是' : '处理中'}</td>
-      <td>${o.deadline}</td>
-      <td>${o.handleTime !== null ? o.handleTime + 'h' : '<span class="bool-na">—</span>'}</td>
-      <td class="${o.overdue ? 'overdue-yes' : 'overdue-no'}">${o.overdue ? '是' : '否'}</td>
-      <td class="${o.satisfied === true ? 'bool-yes' : o.satisfied === false ? 'bool-no' : 'bool-na'}">
-        ${o.satisfied === true ? '满意（含不回复）' : o.satisfied === false ? '不满意' : '—'}
+      <td>${isInvalid ? dash : o.handler}</td>
+      <td class="${isInvalid ? '' : (o.completed ? 'completed-yes' : 'completed-no')}">${isInvalid ? dash : (o.completed ? '是' : '处理中')}</td>
+      <td>${isInvalid ? dash : o.deadline}</td>
+      <td>${isInvalid ? dash : (o.handleTime !== null ? o.handleTime + 'h' : dash)}</td>
+      <td class="${isInvalid ? '' : (o.overdue ? 'overdue-yes' : 'overdue-no')}">${isInvalid ? dash : (o.overdue ? '是' : '否')}</td>
+      <td class="${isInvalid ? '' : (o.satisfied === true ? 'bool-yes' : o.satisfied === false ? 'bool-no' : 'bool-na')}">
+        ${isInvalid ? dash : (o.satisfied === true ? '满意（含不回复）' : o.satisfied === false ? '不满意' : '—')}
       </td>
     </tr>`;
   }).join('');
