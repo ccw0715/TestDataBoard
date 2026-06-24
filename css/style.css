@@ -67,6 +67,25 @@ body {
   color: #fff;
 }
 
+.navbar .logout-btn {
+  margin-left: 16px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.35);
+  color: var(--nav-text);
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.navbar .logout-btn:hover {
+  background: var(--danger, #e53935);
+  border-color: var(--danger, #e53935);
+  color: #fff;
+}
+
 /* ---- Layout ---- */
 .page-wrapper {
   max-width: 1400px;

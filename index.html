@@ -20,6 +20,7 @@
       <a href="workorder-dashboard.html">工单报告</a>
       <a href="rules-config.html">规则配置</a>
     </nav>
+    <button class="logout-btn" onclick="if(confirm('确定要退出登录吗？'))location.href='index.html'">退出登录</button>
   </div>
 
   <main>
@@ -29,6 +30,11 @@
         <p>基于第三方检查数据，提供多维度的项目品质分析与管理支持</p>
       </div>
       <div class="nav-cards">
+         <a href="data-management.html" class="nav-card">
+          <div class="icon">🗂️</div>
+          <h3>检查管理</h3>
+          <p>管理检查项目基础数据，支持新增、编辑、删除项目与检查信息维护</p>
+        </a>
         <a href="project-dashboard.html" class="nav-card">
           <div class="icon">📊</div>
           <h3>单项目报告</h3>
